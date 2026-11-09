@@ -13,7 +13,7 @@ from app.database import Base, SessionLocal, engine
 
 # ---- catálogo do COB (ajuste aqui se o hospital confirmar números diferentes) ----
 NUM_ENFERMARIAS = 9
-LETRAS_LEITO = "ABC"      # leitos por enfermaria: a planilha traz A, B e C; o documento da visita dizia 2. Confirmar.
+LETRAS_LEITO = "AB"      # leitos por enfermaria: a planilha traz A, B e C; o documento da visita dizia 2. Confirmar.
 INDISPONIVEIS = {"E9B"}   # leitos fora de uso
 EM_LIMPEZA = {"E3B"}      # leitos em limpeza no momento
 NUM_SALAS_PARTO = 3       # a confirmar com o hospital

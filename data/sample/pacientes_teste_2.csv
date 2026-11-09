@@ -1,0 +1,26 @@
+leito;código do prontuário;data de entrada no COB;nome completo;GPA;IG;diagnóstico;OBS
+Enf 1 - Leito A;106001;09/11/2026 06:40;Maria Eduarda Santos;G1P0A0;38s2d;Trabalho de parto ativo;Acompanhante presente
+Enf 1 - Leito B;106002;09/11/2026 07:15;Rosângela Maria da Silva;G4P3A0;40;Puérpera pós parto normal;
+E1C;106003;08/11/2026;Beatriz Almeida Nogueira;G2P1A0;37+3;Pré-eclâmpsia grave em uso de sulfato;Reserva sanguínea solicitada
+Enf 2 - Leito A;106004;08/11/2026;Cláudia Regina Tavares;G3P2A0;39;Puérpera pós cesárea;ATB 48h
+2B;106005;08/11/2026;Isabela Ferreira Campos;G1P1A0;39 semanas;Puerpério imediato;Mãe e RN bem
+enfermaria 2 leito c;106006;09/11/2026;Sandra Maria Pereira;G5P2A2;11;Abortamento incompleto;Aguarda curetagem
+Enf 3 - Leito A;106007;09/11/2026 02:10;Amanda Cristina Lopes;G2P0A1;35s6d;DMG, bolsa rota;Bolsa rota há 20h
+E4A;106008;07/11/2026;Juliana Barbosa Ramos;G1P0A0;41;Pós-datismo, indução;
+E4B;106009;09/11/2026;Larissa Monteiro Vieira;G2P1A0;30;Trabalho de parto prematuro;Alergia a penicilina
+Enf 5 - Leito C;106010;08/11/2026;Priscila Gomes Andrade;G3P1A1;38;HAS crônica;
+Enf 6 - Leito A;106011;09/11/2026;Helena Rocha Carvalho;G1P0A0;39;Trabalho de parto ativo;
+Enf 9 - Leito B;106012;09/11/2026;Vanessa Lima Duarte;G2P1A0;37;Gestante a termo;Leito indisponível no sistema
+Enf 10 - Leito A;106013;09/11/2026;Tamires Oliveira Souza;G1P0A0;38;Gestante a termo;
+;106014;09/11/2026 08:05;Bianca Martins Costa;G2P1A0;39;Trabalho de parto, sem leito;
+;106015;09/11/2026 08:40;Daniela Cunha Pires;G3P2A0;36;DHEG, pressão elevada;
+Enf 7 - Leito A;106016;08/11/2026;Raquel Souza Lima;G2P1A0;39;Puérpera pós parto normal;
+Enf 7 - Leito A;106017;09/11/2026;Michele Araújo Reis;G1P0A0;38;Gestante a termo;
+sala de espera;106018;09/11/2026;Joice Cardoso Moura;G1P0A0;37;Gestante a termo;
+Enf 8 - Leito A;;09/11/2026;Fabiana Teles Brito;G1P0A0;38;Gestante a termo;
+Enf 8 - Leito B;106020;09/11/2026;;G1P0A0;38;Gestante a termo;
+Enf 8 - Leito C;106021;31/02/2026;Patrícia Nunes Leal;G2P0A1;38;Gestante a termo;
+Enf 9 - Leito A;106022;09/11/2026;Cíntia Freitas Rocha;G2P1A0;quarenta;Gestante a termo;
+Enf 9 - Leito C;106001;09/11/2026;Maria Eduarda Santos (linha repetida);G1P0A0;38;Gestante a termo;
+Enf 6 - Leito B;106024;09/11/2026;Elaine Pinto Barreto;g2p1a0;39s1d;Puérpera pós cesárea;
+Enf 5 - Leito A;106025;07/11/2026;Lúcia Helena Matos;G6P5A0;38;Gestante multípara;

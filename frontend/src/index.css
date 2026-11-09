@@ -1,0 +1,44 @@
+:root {
+  --cor-principal: #0b6b6f;
+  --cor-fundo: #f3f5f4;
+  --cor-texto: #17262b;
+  --cor-borda: #dde3e1;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  background: var(--cor-fundo);
+  color: var(--cor-texto);
+}
+
+.app { min-height: 100vh; display: flex; flex-direction: column; }
+
+.topo {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px 16px; background: #fff; border-bottom: 1px solid var(--cor-borda);
+}
+
+.api { font-size: 13px; }
+.api.ok { color: #1b5e35; }
+.api.off { color: #8f1d16; }
+
+.menu { display: flex; gap: 4px; padding: 8px 16px; background: #fff; }
+.menu a {
+  padding: 10px 14px; border-radius: 10px; color: var(--cor-texto);
+  text-decoration: none; min-height: 44px; display: flex; align-items: center;
+}
+.menu a.active { background: #dceeee; color: #0a5558; font-weight: 700; }
+
+.conteudo { flex: 1; padding: 16px; }
+
+/* celular: menu vira barra inferior */
+@media (max-width: 768px) {
+  .app { padding-bottom: 64px; }
+  .menu {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    justify-content: space-around; border-top: 1px solid var(--cor-borda); padding: 4px;
+  }
+}

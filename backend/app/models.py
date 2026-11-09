@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import JSON 
 from app.database import Base
@@ -60,27 +60,29 @@ class Paciente(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
 
     # --- dados de ORIGEM (planilha): somente leitura no Gestar ---
-    chave_origem: Mapped[str | None] = mapped_column(String(120), unique=True)  # liga a linha da planilha
+    prontuario: Mapped[str | None] = mapped_column(String(30), unique=True, index=True)
     nome: Mapped[str] = mapped_column(String(120))
-    gestas: Mapped[int] = mapped_column(Integer, default=0)
-    partos: Mapped[int] = mapped_column(Integer, default=0)
-    abortos: Mapped[int] = mapped_column(Integer, default=0)
+    gestas: Mapped[int | None] = mapped_column(Integer)
+    partos: Mapped[int | None] = mapped_column(Integer)
+    abortos: Mapped[int | None] = mapped_column(Integer)
     ig_semanas: Mapped[int | None] = mapped_column(Integer)
     ig_dias: Mapped[int | None] = mapped_column(Integer)
-    diagnostico: Mapped[str | None] = mapped_column(String(200))
+    diagnostico: Mapped[str | None] = mapped_column(Text)
+    observacoes_origem: Mapped[str | None] = mapped_column(Text)
     chegada_em: Mapped[datetime] = mapped_column(DateTime)
-    importacao_id: Mapped[int | None] = mapped_column(ForeignKey("importacoes.id"))
+    chegada_tem_hora: Mapped[bool] = mapped_column(Boolean, default=True)
     linha_origem: Mapped[int | None] = mapped_column(Integer)      # nº da linha na planilha
     leito_origem: Mapped[str | None] = mapped_column(String(60))   # texto original ("Enf 3 - Leito A")
     dados_origem: Mapped[dict | None] = mapped_column(JSON)        # linha completa, com todas as colunas
+    importacao_id: Mapped[int | None] = mapped_column(ForeignKey("importacoes.id"))
 
     # --- dados do GESTAR: a reimportação nunca sobrescreve ---
     perfil: Mapped[str] = mapped_column(String(20), default="gestante")  # gestante | puerpera | abortamento
     parindo: Mapped[bool] = mapped_column(Boolean, default=False)
     comorbidade: Mapped[bool] = mapped_column(Boolean, default=False)
-    status: Mapped[str] = mapped_column(String(20), default="ativa")  # ativa | saiu
-    localizacao_id: Mapped[int | None] = mapped_column(ForeignKey("localizacoes.id"))  # None = aguardando alocação
-    bolsa_rota_em: Mapped[datetime | None] = mapped_column(DateTime)  # horas = agora - isso
+    status: Mapped[str] = mapped_column(String(20), default="ativa", index=True)  # ativa | saiu
+    localizacao_id: Mapped[int | None] = mapped_column(ForeignKey("localizacoes.id"), index=True)  # None = fila
+    bolsa_rota_em: Mapped[datetime | None] = mapped_column(DateTime)
     atb: Mapped[bool] = mapped_column(Boolean, default=False)
     reserva_sanguinea: Mapped[bool] = mapped_column(Boolean, default=False)
     tarh: Mapped[bool] = mapped_column(Boolean, default=False)
@@ -92,7 +94,6 @@ class Paciente(Base):
     parto: Mapped["Parto | None"] = relationship(back_populates="paciente")
     movimentacoes: Mapped[list["Movimentacao"]] = relationship(back_populates="paciente")
     pendencias: Mapped[list["Pendencia"]] = relationship(back_populates="paciente")
-
 
 class Parto(Base):
     __tablename__ = "partos"

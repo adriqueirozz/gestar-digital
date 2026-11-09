@@ -4,6 +4,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import CORS_ORIGINS
 from app.routers import health
 
+from app.database import Base, engine
+from app import models  # noqa: F401  (registra as tabelas)
+
 app = FastAPI(title="Gestar Digital API")
 
 app.add_middleware(
@@ -14,3 +17,4 @@ app.add_middleware(
 )
 
 app.include_router(health.router)
+Base.metadata.create_all(bind=engine)

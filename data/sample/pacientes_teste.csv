@@ -1,0 +1,14 @@
+leito;código do prontuário;data de entrada no COB;nome completo;GPA;IG;diagnóstico;OBS
+Enf 1 - Leito A;104521;08/11/2026;Joana Maria Lima;G2P1A0;39;Trabalho de parto ativo;Alergia a dipirona
+Enf 1 - Leito B;104387;08/11/2026;Fernanda Lúcia Alves;G3P2A0;38;DHEG;Reserva sanguínea solicitada
+Enf 1 - Leito C;104102;07/11/2026;Luciana Pereira Costa;G2P2A0;39;Puérpera pós parto normal;
+Enf 2 - Leito A;103890;07/11/2026;Aline Souza Barros;G1P1A0;40;Puérpera pós cesárea;ATB 48h
+Enf 2 - Leito B;104655;08/11/2026;Patrícia Gomes Melo;G4P1A2;9;Abortamento retido;Aguarda curetagem
+E3A;104700;08/11/2026;Renata Ferreira Dias;G2P1A0;38;Puérpera pós parto normal;TARH em uso
+Enf 3 - Leito D;104711;08/11/2026;Gabriela Nunes Freitas;G2P0A1;40;Indução programada;
+;104802;08/11/2026;Mônica Dias Silveira;G2P1A0;38;Trabalho de parto, bolsa rota;Bolsa rota 21h
+;104815;08/11/2026;Carolina Helena Ferraz;;34;Diabetes gestacional;
+Enf 5 - Leito A;104930;08/11/2026;Tatiane Barbosa Rocha;G1P0A0;36 semanas;Bolsa rota pré-termo;Bolsa rota 19h
+Enf 5 - Leito B;abc;08/11/2026;Viviane Cardoso Pinto;G2P0A1;37;Pré-eclâmpsia;
+Enf 6 - Leito A;104990;08/11/2026;Eliane Maria Ramos;G5P4;40;Puérpera pós parto normal;
+Enf 1 - Leito A;105001;08/11/2026;Bruna Teixeira Azevedo;G1P0A0;40;Gestante a termo;

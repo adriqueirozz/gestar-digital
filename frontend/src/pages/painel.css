@@ -1,0 +1,92 @@
+/* Painel do COB: estilos específicos da tela (os tokens vêm de styles/tokens.css) */
+.painel { display: flex; flex-direction: column; gap: 16px; }
+
+.painel-alerta {
+  display: flex; flex-wrap: wrap; gap: 8px 16px; justify-content: space-between;
+  padding: 12px 16px; border-radius: var(--raio-m);
+  background: var(--alerta-bg); color: var(--alerta-tx); font-size: 14px; font-weight: 500;
+  border: 1px solid #e7c2be;
+}
+
+/* indicadores */
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; }
+.kpi { display: flex; flex-direction: column; gap: 8px; }
+.kpi-rotulo { font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--cor-texto-suave); }
+.kpi-valor { display: flex; align-items: baseline; gap: 8px; font-size: 34px; font-weight: 700; line-height: 1; }
+.kpi-valor small { font-size: 15px; font-weight: 600; color: var(--cor-texto-suave); }
+.kpi-valor.menor { font-size: 22px; line-height: 1.25; display: block; }
+.kpi-nota { font-size: 12px; color: var(--cor-texto-suave); }
+.kpi-alerta .card { border-color: #e7c2be; box-shadow: 0 0 0 2px var(--alerta-bg); }
+.barra { height: 8px; border-radius: 99px; background: #f1e3ea; overflow: hidden; }
+.barra > div { height: 100%; border-radius: 99px; background: var(--cor-principal); }
+.kpi-alerta .barra > div { background: #c0392b; }
+
+/* barra de filtros */
+.filtros { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.filtros .rotulo { font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--cor-texto-suave); margin-right: 4px; }
+
+/* três colunas: fila | enfermarias | salas e macas */
+.painel-colunas { display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start; }
+.col-fila { flex: 1 1 300px; min-width: 0; }
+.col-mapa { flex: 2 1 520px; min-width: 0; }
+.col-salas { flex: 1 1 290px; min-width: 0; display: flex; flex-direction: column; gap: 16px; }
+.pilha { display: flex; flex-direction: column; gap: 12px; }
+
+.titulo-linha { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.titulo-linha h2 { margin: 0; font-size: 16px; font-weight: 700; }
+.nota { font-size: 12px; color: var(--cor-texto-suave); }
+
+/* legenda */
+.legenda { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; color: #4a3a42; }
+.legenda i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -2px; margin-right: 4px; }
+.lg-livre { background: var(--leito-livre-bg); border: 1px dashed var(--leito-livre-borda); }
+.lg-ocupado { background: #fff; border: 1px solid var(--leito-ocupado-borda); }
+.lg-limpeza { background: var(--leito-limpeza-bg); border: 1px solid var(--leito-limpeza-borda); }
+.lg-indisp { background: var(--leito-indisp-bg); border: 1px solid #aab4b1; }
+
+/* enfermarias e leitos */
+.enfs { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+.enf { border: 1px solid var(--cor-borda); border-radius: var(--raio-m); padding: 10px; background: #fff9fb; display: flex; flex-direction: column; gap: 8px; }
+.enf-nome { font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--cor-texto-suave); }
+
+.leito {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 4px; text-align: left;
+  width: 100%; box-sizing: border-box; padding: 10px; border-radius: var(--raio-p);
+  min-height: 56px; font: inherit; color: var(--cor-texto); transition: opacity .15s;
+}
+.leito.livre { background: var(--leito-livre-bg); border: 1px dashed var(--leito-livre-borda); }
+.leito.ocupado { background: #fff; border: 1px solid var(--leito-ocupado-borda); min-height: 92px; }
+.leito.limpeza { background: var(--leito-limpeza-bg); border: 1px solid var(--leito-limpeza-borda); }
+.leito.indisponivel {
+  background: repeating-linear-gradient(45deg, #e3e7e6, #e3e7e6 6px, #d6dcda 6px, #d6dcda 12px);
+  border: 1px solid #aab4b1;
+}
+.leito.apagado { opacity: .25; }
+.leito-rotulo { font-size: 12px; font-weight: 600; color: var(--cor-texto-suave); }
+.leito-estado { font-size: 14px; font-weight: 600; }
+.leito.livre .leito-estado { color: var(--ok-tx); }
+.leito.limpeza .leito-estado { color: var(--aviso-tx); }
+.leito.indisponivel .leito-estado { color: #4b5b60; }
+.leito-nome { font-size: 14px; font-weight: 700; line-height: 1.25; overflow-wrap: anywhere; }
+.tags { display: flex; flex-wrap: wrap; gap: 4px; }
+
+/* fila */
+.fila-item { border: 1px solid var(--cor-borda); border-radius: var(--raio-m); padding: 12px; display: flex; flex-direction: column; gap: 8px; background: #fffafc; }
+.fila-topo { display: flex; justify-content: space-between; gap: 8px; align-items: flex-start; }
+.fila-nome { font-weight: 700; font-size: 15px; line-height: 1.25; }
+.fila-meta { font-size: 13px; color: var(--cor-texto-suave); }
+.fila-espera { font-size: 13px; }
+.fila-espera span { color: var(--cor-texto-suave); }
+.vazio { padding: 16px; text-align: center; color: var(--cor-texto-suave); font-size: 14px; }
+
+/* salas, apoio e macas */
+.sala { display: flex; justify-content: space-between; align-items: center; gap: 8px; min-height: 44px; padding: 0 12px; border-radius: var(--raio-p); font-size: 13px; }
+.sala .sala-nome { font-weight: 600; color: #4a3a42; }
+.sala.livre { background: var(--leito-livre-bg); border: 1px dashed var(--leito-livre-borda); }
+.sala.livre b { color: var(--ok-tx); }
+.sala.ocupada { background: var(--info-bg); border: 1px solid #6a93c8; }
+.maca { border: 1px solid #e7c2be; background: #fdf5f4; border-radius: var(--raio-m); padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; }
+.maca b { font-size: 14px; }
+.maca span { font-size: 13px; color: #4a3a42; }
+.maca small { font-size: 12px; color: var(--cor-texto-suave); }
+.subtitulo { margin: 4px 0 0; font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--cor-texto-suave); }

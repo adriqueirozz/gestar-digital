@@ -1,0 +1,38 @@
+:root {
+  /* base */
+  --cor-texto: #2a1b22;
+  --cor-texto-suave: #6b5560;
+  --cor-fundo: #fbf4f7;
+  --cor-superficie: #ffffff;
+  --cor-borda: #ebd9e1;
+
+  /* principal */
+  --cor-principal: #b0306a;
+  --cor-principal-escura: #8e2554;
+  --cor-principal-clara: #fbe4ee;
+  --cor-principal-texto: #7a1f48;
+
+  --rosa-bg: #fce4ef;   --rosa-tx: #8a1f52;
+  --neutro-bg: #f4ecf0; --neutro-tx: #4a3a42;
+  
+  /* tons semânticos: fundo e texto de cada um */
+  --alerta-bg: #fbe9e7;  --alerta-tx: #8f1d16;
+  --aviso-bg: #fff1d6;   --aviso-tx: #7a4f00;
+  --info-bg: #e4eefa;    --info-tx: #194a86;
+  --ok-bg: #e4f3e9;      --ok-tx: #1b5e35;
+  --neutro-bg: #edf0ef;  --neutro-tx: #34464b;
+  --roxo-bg: #eee9f8;    --roxo-tx: #53388f;
+
+  /* status do leito */
+  --leito-livre-bg: #eaf5ee;   --leito-livre-borda: #5e9e78;
+  --leito-ocupado-borda: #8a9a96;
+  --leito-limpeza-bg: #fff1d0; --leito-limpeza-borda: #d9a432;
+  --leito-indisp-bg: #e3e7e6;
+
+  /* forma */
+  --raio-p: 10px;
+  --raio-m: 12px;
+  --raio-g: 14px;
+  --raio-pilula: 999px;
+  --alvo-toque: 44px;
+}

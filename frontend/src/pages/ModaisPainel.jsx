@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import {
-  alocarPaciente, atualizarPaciente, editarMaca, getDestinos, getPaciente,
-  mudarSituacaoLeito, registrarParto, registrarSaida,
+  alocarPaciente, atualizarPaciente, concluirPendencia, criarPendencia, editarMaca, getDestinos,
+  getPaciente, mudarSituacaoLeito, registrarParto, registrarSaida,
 } from "../api.js";
 import Botao from "../components/ui/Botao.jsx";
 import Chip from "../components/ui/Chip.jsx";
 import Modal from "../components/ui/Modal.jsx";
 import Tag from "../components/ui/Tag.jsx";
 import "./modais.css";
+import { fmtRestante, rotuloStatus, tomStatus } from "./pendenciasUtil.js";
 
 const FUSO = "America/Recife";
 const NOME_PERFIL = { gestante: "Gestante", puerpera: "Puérpera", abortamento: "Abortamento" };
@@ -191,6 +192,14 @@ export function ModalPaciente({ id, onFechar, onMudou, onAlocar }) {
             </>
           )}
 
+            {ativa && (
+            <PendenciasDaPaciente
+              pacienteId={p.id}
+              pendencias={p.pendencias}
+              aoMudar={async () => { await carregar(); onMudou(); }}
+            />
+          )}
+
           <h3 className="secao-titulo">Histórico</h3>
           <ul className="historico">
             {p.historico.length === 0 && <li>Nenhuma movimentação registrada.</li>}
@@ -332,5 +341,52 @@ export function ModalMaca({ maca, onFechar, onMudou }) {
         </div>
       </div>
     </Modal>
+  );
+}
+
+/* ------------------------------------------------------------------ pendências da paciente */
+function PendenciasDaPaciente({ pacienteId, pendencias, aoMudar }) {
+  const [descricao, setDescricao] = useState("");
+  const [prazo, setPrazo] = useState(12);
+  const { erro, ocupado, executar } = useAcao();
+
+  return (
+    <>
+      <h3 className="secao-titulo">Pendências</h3>
+      {erro && <p className="erro" role="alert">{erro}</p>}
+      {pendencias.length === 0 && <p className="nota">Nenhuma pendência aberta.</p>}
+      <ul className="historico">
+        {pendencias.map((x) => (
+          <li key={x.id}>
+            <b>{x.descricao}</b> <Tag tom={tomStatus[x.status]}>{rotuloStatus[x.status]}</Tag>
+            <br /><small>{fmtRestante(x.restante_min)} · prazo {x.prazo_horas}h</small>{" "}
+            <Botao disabled={ocupado} onClick={() => executar(async () => { await concluirPendencia(x.id); await aoMudar(); })}>
+              Concluir
+            </Botao>
+          </li>
+        ))}
+      </ul>
+      <div className="campos-linha">
+        <Campo rotulo="Nova pendência">
+          <input value={descricao} maxLength={200} onChange={(e) => setDescricao(e.target.value)} placeholder="ex.: coletar exames" />
+        </Campo>
+        <Campo rotulo="Prazo">
+          <select value={prazo} onChange={(e) => setPrazo(Number(e.target.value))}>
+            <option value={12}>12 horas</option>
+            <option value={24}>24 horas</option>
+          </select>
+        </Campo>
+      </div>
+      <div className="linha-acoes">
+        <Botao disabled={!descricao.trim() || ocupado}
+          onClick={() => executar(async () => {
+            await criarPendencia({ paciente_id: pacienteId, descricao, prazo_horas: prazo });
+            setDescricao("");
+            await aoMudar();
+          })}>
+          Adicionar pendência
+        </Botao>
+      </div>
+    </>
   );
 }

@@ -100,3 +100,6 @@ button.sala.livre { cursor: default; }
 .maca-nome { font-weight: 700; font-size: 14px; }
 .maca-linha { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .fila-rodape { display: flex; justify-content: space-between; align-items: flex-end; gap: 8px; flex-wrap: wrap; }
+
+.kpi-link { display: block; color: inherit; text-decoration: none; }
+.kpi-link:hover .card { border-color: var(--cor-principal); }

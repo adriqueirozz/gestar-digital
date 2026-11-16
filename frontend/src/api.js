@@ -54,3 +54,7 @@ export const atualizarPaciente = (id, dados) => chamar("PATCH", `/api/pacientes/
 export const getDestinos = () => chamar("GET", "/api/locais/destinos");
 export const mudarSituacaoLeito = (codigo, situacao) => chamar("POST", `/api/locais/${codigo}/situacao`, { situacao });
 export const editarMaca = (codigo, descricao) => chamar("PATCH", `/api/locais/${codigo}`, { descricao });
+
+export const getPlantao = () => chamar("GET", "/api/pendencias/plantao");
+export const criarPendencia = (dados) => chamar("POST", "/api/pendencias", dados);
+export const concluirPendencia = (id) => chamar("POST", `/api/pendencias/${id}/concluir`);

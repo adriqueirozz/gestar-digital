@@ -1,0 +1,18 @@
+export const rotuloStatus = {
+  em_dia: "Em dia",
+  proxima: "Próxima do vencimento",
+  vencida: "Vencida",
+  concluida: "Concluída",
+};
+
+export const tomStatus = { em_dia: "ok", proxima: "aviso", vencida: "alerta", concluida: "neutro" };
+
+function duracao(min) {
+  if (min < 60) return `${min} min`;
+  return `${Math.floor(min / 60)}h${String(min % 60).padStart(2, "0")}`;
+}
+
+// restante_min negativo = já venceu
+export function fmtRestante(min) {
+  return min < 0 ? `vencida há ${duracao(-min)}` : `vence em ${duracao(min)}`;
+}

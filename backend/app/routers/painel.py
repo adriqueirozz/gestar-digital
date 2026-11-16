@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from app import models
 from app.database import get_db
+from app.services import pendencias as srv_pend
 
 router = APIRouter(prefix="/painel", tags=["painel"])
 
@@ -134,6 +135,7 @@ def painel(db: Session = Depends(get_db)):
         "salas": {"parto_em_uso": sum(1 for s in salas_parto if s["paciente"]), "parto_total": len(salas_parto),
                   "cirurgia_em_uso": sum(1 for s in salas_cirurgia if s["paciente"]), "cirurgia_total": len(salas_cirurgia)},
         "pos_parto": {"acima_24h": pos24, "perto_48h": pos42},
+        "pendencias": srv_pend.resumo(db, agora),
         "enfermarias": [{"numero": n, "leitos": ls} for n, ls in sorted(enfermarias.items())],
         "salas_parto": salas_parto,
         "salas_cirurgia": salas_cirurgia,

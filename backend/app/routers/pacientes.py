@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from app import models
 from app.database import get_db
 from app.services import movimentacao
+from app.services import pendencias as srv_pend
 from app.services.movimentacao import RegraErro
 
 router = APIRouter(prefix="/pacientes", tags=["pacientes"])
@@ -77,6 +78,8 @@ def _detalhe(db: Session, p) -> dict:
         "parto": {"data_hora": _iso(p.parto.data_hora), "tipo": p.parto.tipo, "nascimento": p.parto.nascimento,
                   "horas": int(_horas(p.parto.data_hora, agora))} if p.parto else None,
         "desfecho": p.desfecho, "saida_em": _iso(p.saida_em),
+        "pendencias": [srv_pend.serializar(x, agora) for x in sorted(p.pendencias, key=lambda y: y.vence_em)
+                       if not x.concluida_em],
         "historico": [
             {"data_hora": _iso(m.data_hora), "motivo": m.motivo, "origem": nome(m.origem_id),
              "destino": nome(m.destino_id), "observacao": m.observacao}

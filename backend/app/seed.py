@@ -92,6 +92,17 @@ def criar_pacientes(db, locais: dict) -> None:
             db.add(models.Parto(paciente_id=paciente.id, data_hora=agora - timedelta(hours=d["parto_h"]),
                                 tipo=d["parto_tipo"], nascimento="vivo"))
 
+        # pendências de demonstração: (paciente, descrição, prazo em horas, criada há quantas horas)
+    por_nome = {p.nome: p for p in db.query(models.Paciente).all()}
+    for nome, descricao, prazo, criada_h in (
+        ("Joana Maria Lima", "Coletar exames de entrada", 12, 2),
+        ("Fernanda Lúcia Alves", "Reavaliar pressão arterial", 12, 11),
+        ("Aline Souza Barros", "Revisar curativo da cesárea", 24, 26),
+        ("Patrícia Gomes Melo", "Agendar curetagem", 24, 3),
+    ):
+        criada = agora - timedelta(hours=criada_h)
+        db.add(models.Pendencia(paciente_id=por_nome[nome].id, descricao=descricao, prazo_horas=prazo,
+                                criada_em=criada, vence_em=criada + timedelta(hours=prazo)))
 
 def seed(com_pacientes: bool = True, recriar: bool = False) -> None:
     if recriar:

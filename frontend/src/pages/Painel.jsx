@@ -6,6 +6,7 @@ import Chip from "../components/ui/Chip.jsx";
 import Tag from "../components/ui/Tag.jsx";
 import { ModalAlocar, ModalLeito, ModalMaca, ModalPaciente } from "./ModaisPainel.jsx";
 import "./painel.css";
+import { Link } from "react-router-dom";
 
 // perfil -> cor da etiqueta (o tom "rosa" precisa existir no ui.css)
 const TOM_PERFIL = { gestante: "rosa", puerpera: "roxo", abortamento: "aviso" };
@@ -86,7 +87,7 @@ export default function Painel() {
   if (erro && !dados) return <p>Não foi possível carregar o painel. A API está rodando?</p>;
   if (!dados) return <p>Carregando...</p>;
 
-  const { ocupacao, sem_leito, aguardando, salas, pos_parto, enfermarias, fila, macas } = dados;
+  const { ocupacao, sem_leito, aguardando, salas, pos_parto, pendencias, enfermarias, fila, macas } = dados;
   const fechar = () => setModal(null);
   const abrirPaciente = (id) => setModal({ tipo: "paciente", id });
 
@@ -127,6 +128,12 @@ export default function Painel() {
             Cirurgia {salas.cirurgia_em_uso}/{salas.cirurgia_total}
           </div>
         </Kpi>
+          <Link to="/pendencias" className="kpi-link">
+          <Kpi rotulo="Pendências vencidas" destaque={pendencias.vencidas > 0}
+            nota={`${pendencias.proximas} próximas do vencimento · ver passagem de plantão`}>
+            <div className="kpi-valor">{pendencias.vencidas}</div>
+          </Kpi>
+        </Link>
         <Kpi rotulo="Atenção pós-parto" nota={`Acima de 24h · ${pos_parto.perto_48h} perto de 48h · a decisão é da equipe`}>
           <div className="kpi-valor">{pos_parto.acima_24h}</div>
         </Kpi>

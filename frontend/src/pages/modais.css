@@ -1,0 +1,20 @@
+.modal-corpo { display: flex; flex-direction: column; gap: 14px; }
+.secao-titulo { margin: 0; font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--cor-texto-suave); }
+.dados { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 8px 16px; font-size: 14px; }
+.dados small { display: block; font-size: 12px; color: var(--cor-texto-suave); }
+.linha-acoes { display: flex; flex-wrap: wrap; gap: 8px; }
+.grade-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.campo { display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 600; }
+.campo input, .campo select, .campo textarea {
+  min-height: 44px; padding: 0 12px; border: 1px solid #d9c3cd; border-radius: var(--raio-p);
+  font: inherit; font-size: 15px; font-weight: 400; background: #fff;
+}
+.campos-linha { display: flex; flex-wrap: wrap; gap: 12px; }
+.campos-linha .campo { flex: 1 1 160px; }
+.marcas { display: flex; flex-wrap: wrap; gap: 8px 16px; }
+.marcas label { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; min-height: 32px; }
+.caixa { border: 1px solid var(--cor-borda); border-radius: var(--raio-m); padding: 12px; background: #fffafc; display: flex; flex-direction: column; gap: 10px; }
+.erro { margin: 0; color: var(--alerta-tx); background: var(--alerta-bg); padding: 8px 12px; border-radius: var(--raio-p); font-size: 14px; }
+.historico { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+.historico li { padding: 6px 0; border-top: 1px solid var(--cor-borda); }
+.historico small { color: var(--cor-texto-suave); }

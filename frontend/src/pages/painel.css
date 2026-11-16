@@ -90,3 +90,13 @@
 .maca span { font-size: 13px; color: #4a3a42; }
 .maca small { font-size: 12px; color: var(--cor-texto-suave); }
 .subtitulo { margin: 4px 0 0; font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--cor-texto-suave); }
+
+/* elementos clicáveis do painel */
+button.leito, button.sala { cursor: pointer; font: inherit; }
+button.sala { width: 100%; box-sizing: border-box; text-align: left; }
+button.sala.livre { cursor: default; }
+.link { background: none; border: 0; padding: 0; text-align: left; font-family: inherit; color: inherit; cursor: pointer; }
+.link:hover { text-decoration: underline; }
+.maca-nome { font-weight: 700; font-size: 14px; }
+.maca-linha { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.fila-rodape { display: flex; justify-content: space-between; align-items: flex-end; gap: 8px; flex-wrap: wrap; }

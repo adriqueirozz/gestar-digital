@@ -77,7 +77,7 @@ Se o PowerShell bloquear a ativação do ambiente, rode uma vez:
 `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`.
 
 A API fica em **http://localhost:8000**:
-- Documentação interativa: http://localhost:8000/docs
+- Documentação interativa: 
 - Saúde da API: http://localhost:8000/health
 - Dados do painel: http://localhost:8000/api/painel
 
@@ -111,7 +111,7 @@ Não usamos migrações (Alembic). Quando o `models.py` mudar, recrie o banco co
 
 ### Alterar a quantidade de leitos
 
-No topo de `backend/app/seed.py`:
+No topo de `backend/app/seed.py`:http://localhost:8000/docs
 
 ```python
 NUM_ENFERMARIAS = 9

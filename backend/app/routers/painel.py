@@ -117,7 +117,8 @@ def painel(db: Session = Depends(get_db)):
             "onde": f"Em maca · {maca.descricao or maca.nome}" if maca else "Recém-chegada · sem local",
         })
         if maca:
-            macas.append({"nome": p.nome, "local": maca.descricao or maca.nome, "espera_min": espera})
+             macas.append({"id": p.id, "codigo": maca.codigo, "nome": p.nome,
+                          "local": maca.descricao or maca.nome, "espera_min": espera})
     fila.sort(key=lambda x: (-x["pontos"], -(x["espera_min"] or 0)))
 
     # ---- indicadores

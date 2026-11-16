@@ -26,3 +26,31 @@ export async function getUltimaImportacao() {
   if (!resposta.ok) throw new Error("Erro ao carregar a importação");
   return resposta.json();
 }
+
+async function chamar(metodo, caminho, corpo) {
+  const resposta = await fetch(`${API_URL}${caminho}`, {
+    method: metodo,
+    headers: corpo ? { "Content-Type": "application/json" } : undefined,
+    body: corpo ? JSON.stringify(corpo) : undefined,
+  });
+  let dados = null;
+  try {
+    dados = await resposta.json();
+  } catch {
+    /* resposta sem corpo */
+  }
+  if (!resposta.ok) {
+    const detalhe = dados && dados.detail;
+    throw new Error(typeof detalhe === "string" ? detalhe : "Não foi possível concluir a ação.");
+  }
+  return dados;
+}
+
+export const getPaciente = (id) => chamar("GET", `/api/pacientes/${id}`);
+export const alocarPaciente = (id, dados) => chamar("POST", `/api/pacientes/${id}/alocar`, dados);
+export const registrarParto = (id, dados) => chamar("POST", `/api/pacientes/${id}/parto`, dados);
+export const registrarSaida = (id, dados) => chamar("POST", `/api/pacientes/${id}/saida`, dados);
+export const atualizarPaciente = (id, dados) => chamar("PATCH", `/api/pacientes/${id}/sinalizacoes`, dados);
+export const getDestinos = () => chamar("GET", "/api/locais/destinos");
+export const mudarSituacaoLeito = (codigo, situacao) => chamar("POST", `/api/locais/${codigo}/situacao`, { situacao });
+export const editarMaca = (codigo, descricao) => chamar("PATCH", `/api/locais/${codigo}`, { descricao });

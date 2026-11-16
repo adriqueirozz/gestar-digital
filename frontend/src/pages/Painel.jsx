@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { getPainel } from "../api.js";
+import Botao from "../components/ui/Botao.jsx";
 import Card from "../components/ui/Card.jsx";
 import Chip from "../components/ui/Chip.jsx";
 import Tag from "../components/ui/Tag.jsx";
+import { ModalAlocar, ModalLeito, ModalMaca, ModalPaciente } from "./ModaisPainel.jsx";
 import "./painel.css";
 
 // perfil -> cor da etiqueta (o tom "rosa" precisa existir no ui.css)
@@ -53,11 +55,11 @@ function Kpi({ rotulo, destaque, children, nota }) {
   );
 }
 
-function Leito({ leito, apagado }) {
+function Leito({ leito, apagado, onClick }) {
   const { situacao, paciente } = leito;
-  const classe = `leito ${situacao} ${apagado ? "apagado" : ""}`;
   return (
-    <div className={classe}>
+    <button type="button" className={`leito ${situacao} ${apagado ? "apagado" : ""}`} onClick={onClick}
+      aria-label={paciente ? `Leito ${leito.letra}, ${paciente.nome}` : `Leito ${leito.letra}, ${ROTULO_ESTADO[situacao]}`}>
       <span className="leito-rotulo">Leito {leito.letra}</span>
       {paciente ? (
         <>
@@ -67,7 +69,7 @@ function Leito({ leito, apagado }) {
       ) : (
         <span className="leito-estado">{ROTULO_ESTADO[situacao]}</span>
       )}
-    </div>
+    </button>
   );
 }
 
@@ -75,21 +77,23 @@ export default function Painel() {
   const [dados, setDados] = useState(null);
   const [erro, setErro] = useState(false);
   const [filtro, setFiltro] = useState("todos");
+  // modal aberto: null | {tipo: "paciente", id} | {tipo: "alocar", paciente} | {tipo: "leito", leito} | {tipo: "maca", maca}
+  const [modal, setModal] = useState(null);
 
-  useEffect(() => {
-    getPainel().then(setDados).catch(() => setErro(true));
-  }, []);
+  const recarregar = () => getPainel().then((d) => { setDados(d); setErro(false); }).catch(() => setErro(true));
+  useEffect(() => { recarregar(); }, []);
 
-  if (erro) return <p>Não foi possível carregar o painel. A API está rodando?</p>;
+  if (erro && !dados) return <p>Não foi possível carregar o painel. A API está rodando?</p>;
   if (!dados) return <p>Carregando...</p>;
 
   const { ocupacao, sem_leito, aguardando, salas, pos_parto, enfermarias, fila, macas } = dados;
+  const fechar = () => setModal(null);
+  const abrirPaciente = (id) => setModal({ tipo: "paciente", id });
 
-  // um leito fica "apagado" quando não combina com o filtro escolhido
   const combina = (leito) =>
-    filtro === "todos" ||
-    filtro === leito.situacao ||
-    (leito.paciente && filtro === leito.paciente.perfil);
+    filtro === "todos" || filtro === leito.situacao || (leito.paciente && filtro === leito.paciente.perfil);
+
+  const aoClicarLeito = (l) => (l.paciente ? abrirPaciente(l.paciente.id) : setModal({ tipo: "leito", leito: l }));
 
   return (
     <div className="painel">
@@ -106,13 +110,9 @@ export default function Painel() {
         </div>
       )}
 
-      {/* indicadores */}
       <section className="kpis" aria-label="Indicadores">
-        <Kpi
-          rotulo="Ocupação de leitos"
-          destaque={ocupacao.alerta}
-          nota={`${ocupacao.total} leitos disponíveis · ${ocupacao.indisponiveis} indisponível(is)`}
-        >
+        <Kpi rotulo="Ocupação de leitos" destaque={ocupacao.alerta}
+          nota={`${ocupacao.total} leitos disponíveis · ${ocupacao.indisponiveis} indisponível(is)`}>
           <div className="kpi-valor">
             {ocupacao.ocupados}/{ocupacao.total} <small>{ocupacao.percentual}%</small>
           </div>
@@ -132,18 +132,14 @@ export default function Painel() {
         </Kpi>
       </section>
 
-      {/* filtros */}
       <section className="filtros" aria-label="Filtros">
         <span className="rotulo">Filtrar</span>
         {FILTROS.map(([valor, rotulo]) => (
-          <Chip key={valor} selecionado={filtro === valor} onClick={() => setFiltro(valor)}>
-            {rotulo}
-          </Chip>
+          <Chip key={valor} selecionado={filtro === valor} onClick={() => setFiltro(valor)}>{rotulo}</Chip>
         ))}
       </section>
 
       <div className="painel-colunas">
-        {/* fila */}
         <div className="col-fila">
           <Card>
             <div className="titulo-linha">
@@ -158,16 +154,21 @@ export default function Painel() {
               {fila.map((p) => (
                 <div className="fila-item" key={p.id}>
                   <div className="fila-topo">
-                    <span className="fila-nome">{p.nome}</span>
+                    <button type="button" className="link fila-nome" onClick={() => abrirPaciente(p.id)}>{p.nome}</button>
                     <Tag tom={TOM_PRIORIDADE[p.prioridade]}>Prioridade {p.prioridade}</Tag>
                   </div>
                   <div className="fila-meta">
                     {p.gpa} · IG {p.ig}{p.diagnostico ? ` · ${p.diagnostico}` : ""}
                   </div>
                   <Etiquetas paciente={p} limite={3} />
-                  <div className="fila-espera">
-                    <b>{formatarEspera(p.espera_min)}</b>{p.espera_min != null && " de espera"}
-                    <br /><span>{p.onde}</span>
+                  <div className="fila-rodape">
+                    <div className="fila-espera">
+                      <b>{formatarEspera(p.espera_min)}</b>{p.espera_min != null && " de espera"}
+                      <br /><span>{p.onde}</span>
+                    </div>
+                    <Botao variante="primario" onClick={() => setModal({ tipo: "alocar", paciente: { id: p.id, nome: p.nome } })}>
+                      Alocar
+                    </Botao>
                   </div>
                 </div>
               ))}
@@ -175,7 +176,6 @@ export default function Painel() {
           </Card>
         </div>
 
-        {/* enfermarias */}
         <div className="col-mapa">
           <Card>
             <div className="titulo-linha">
@@ -192,7 +192,7 @@ export default function Painel() {
                 <div className="enf" key={enf.numero}>
                   <div className="enf-nome">Enfermaria {enf.numero}</div>
                   {enf.leitos.map((l) => (
-                    <Leito key={l.codigo} leito={l} apagado={!combina(l)} />
+                    <Leito key={l.codigo} leito={l} apagado={!combina(l)} onClick={() => aoClicarLeito(l)} />
                   ))}
                 </div>
               ))}
@@ -200,16 +200,16 @@ export default function Painel() {
           </Card>
         </div>
 
-        {/* salas e macas */}
         <div className="col-salas">
           <Card>
             <div className="titulo-linha"><h2>Salas</h2></div>
             <div className="pilha" style={{ gap: 10 }}>
               {[...dados.salas_parto, ...dados.salas_cirurgia].map((s) => (
-                <div key={s.codigo} className={`sala ${s.paciente ? "ocupada" : "livre"}`}>
+                <button type="button" key={s.codigo} className={`sala ${s.paciente ? "ocupada" : "livre"}`}
+                  onClick={s.paciente ? () => abrirPaciente(s.paciente.id) : undefined}>
                   <span className="sala-nome">{s.nome}</span>
-                  {s.paciente ? <b>{s.paciente.nome}</b> : <b>Livre</b>}
-                </div>
+                  <b>{s.paciente ? s.paciente.nome : "Livre"}</b>
+                </button>
               ))}
               <p className="subtitulo">Apoio</p>
               <div className="tags">
@@ -230,8 +230,11 @@ export default function Painel() {
             <div className="pilha" style={{ gap: 10 }}>
               {macas.length === 0 && <div className="vazio">Nenhuma paciente em maca.</div>}
               {macas.map((m) => (
-                <div className="maca" key={m.nome}>
-                  <b>{m.nome}</b>
+                <div className="maca" key={m.codigo}>
+                  <div className="maca-linha">
+                    <button type="button" className="link maca-nome" onClick={() => abrirPaciente(m.id)}>{m.nome}</button>
+                    <Botao onClick={() => setModal({ tipo: "maca", maca: m })}>Editar local</Botao>
+                  </div>
                   <span>{m.local}</span>
                   <small>{m.espera_min == null ? "hora de entrada não informada" : `em maca há ${formatarEspera(m.espera_min)}`}</small>
                 </div>
@@ -240,6 +243,14 @@ export default function Painel() {
           </Card>
         </div>
       </div>
+
+      {modal?.tipo === "paciente" && (
+        <ModalPaciente id={modal.id} onFechar={fechar} onMudou={recarregar}
+          onAlocar={(paciente) => setModal({ tipo: "alocar", paciente })} />
+      )}
+      {modal?.tipo === "alocar" && <ModalAlocar paciente={modal.paciente} onFechar={fechar} onMudou={recarregar} />}
+      {modal?.tipo === "leito" && <ModalLeito leito={modal.leito} onFechar={fechar} onMudou={recarregar} />}
+      {modal?.tipo === "maca" && <ModalMaca maca={modal.maca} onFechar={fechar} onMudou={recarregar} />}
     </div>
   );
 }

@@ -1,0 +1,47 @@
+.login-tela {
+  min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  padding: 24px 16px; background: var(--cor-fundo);
+}
+.login-caixa {
+  width: 100%; max-width: 420px; background: var(--cor-superficie);
+  border: 1px solid var(--cor-borda); border-radius: var(--raio-g);
+  padding: 28px 24px; display: flex; flex-direction: column; gap: 16px;
+}
+.login-marca { font-size: 13px; font-weight: 700; color: var(--cor-principal); letter-spacing: .02em; }
+.login-caixa h1 { margin: 0; font-size: 24px; }
+.login-nota { margin: 0; font-size: 14px; color: var(--cor-texto-suave); }
+.login-nota a { color: var(--cor-principal); font-weight: 600; }
+
+.login-recentes h2 {
+  margin: 0 0 8px; font-size: 12px; font-weight: 600; letter-spacing: .04em;
+  text-transform: uppercase; color: var(--cor-texto-suave);
+}
+.login-recentes ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.login-recentes li {
+  display: flex; align-items: stretch; border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-p); overflow: hidden;
+}
+.login-recentes li.ativo { border-color: var(--cor-principal); background: var(--cor-principal-clara); }
+.login-recente {
+  flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  min-height: var(--alvo-toque); padding: 0 12px; border: 0; background: transparent;
+  font: inherit; font-size: 15px; color: var(--cor-texto); cursor: pointer; text-align: left;
+}
+.login-recente-nome { font-weight: 600; }
+.login-esquecer {
+  width: var(--alvo-toque); border: 0; border-left: 1px solid var(--cor-borda); background: transparent;
+  font-size: 20px; color: var(--cor-texto-suave); cursor: pointer;
+}
+.login-esquecer:hover, .login-recente:hover { background: var(--neutro-bg); }
+
+.login-form { display: flex; flex-direction: column; gap: 12px; }
+.login-campo { display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 600; }
+.login-campo input {
+  min-height: var(--alvo-toque); padding: 0 12px; border: 1px solid #d9c3cd; border-radius: var(--raio-p);
+  font: inherit; font-size: 16px; font-weight: 400; background: #fff;
+}
+.login-erro {
+  margin: 0; color: var(--alerta-tx); background: var(--alerta-bg);
+  padding: 8px 12px; border-radius: var(--raio-p); font-size: 14px;
+}
+.login-rodape { margin: 0; font-size: 12px; color: var(--cor-texto-suave); }

@@ -168,6 +168,7 @@ Perfis: `enfermagem`, `medico` e `gestao`. O seed cria um usuário de demonstra�
 | `gestao` | `gestar123` | Gestão |
 
 - `POST /api/auth/login` recebe `username` e `password` (formulário) e devolve um token válido por 12h. Envie-o nas outras chamadas no cabeçalho `Authorization: Bearer <token>`.
+- No frontend, a tela **/login** abre sozinha quando ninguém está logado. O nome e o perfil aparecem no topo; clicando neles dá para **trocar de usuário** (os usuários recentes daquele computador ficam listados, sem senha) ou **sair**.
 - No `/docs`, use o botão **Authorize** para entrar com um desses usuários.
 - As senhas ficam no banco só como hash (PBKDF2-SHA256).
 
@@ -175,7 +176,7 @@ Variáveis de ambiente (opcionais):
 
 | Variável | Padrão | Para quê |
 |---|---|---|
-| `EXIGIR_LOGIN` | `false` | Com `true`, toda rota `/api` exige token. Fica `false` até a tela de login (G-17) existir |
+| `EXIGIR_LOGIN` | `true` | Toda rota `/api` exige token. `false` libera as rotas sem login (só para depurar pela linha de comando) |
 | `GESTAR_SECRET_KEY` | chave de desenvolvimento | Assina os tokens. **Obrigatório trocar** fora da máquina local |
 | `GESTAR_TOKEN_HORAS` | `12` | Validade do token, em horas |
 
@@ -200,6 +201,7 @@ Para restringir uma rota a perfis: `dependencies=[Depends(exigir_perfil("enferma
 | `ImportError: cannot import name 'importacoes' from 'app.routers'` | O arquivo `backend/app/routers/importacoes.py` não está nessa pasta. Confira se não ficou numa subpasta |
 | `Form data requires "python-multipart"` | `pip install -r requirements-dev.txt` |
 | `Failed to resolve import "react-router-dom"` | Dentro de `frontend/`: `npm install react-router-dom` |
+| Volta sempre para a tela de login | O token venceu (12h) ou o banco foi recriado. Entre de novo |
 | Painel diz "A API está rodando?" | Suba o backend (`uvicorn app.main:app --reload`) e confira http://localhost:8000/health |
 | Erro de CORS no navegador | O frontend deve estar em `http://localhost:5173` (porta padrão do Vite) |
 | Tela vazia depois de mudar o `models.py` | `python -m app.seed --recriar` |

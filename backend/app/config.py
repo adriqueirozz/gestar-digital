@@ -12,6 +12,6 @@ DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./gestar.db")
 SECRET_KEY = os.getenv("GESTAR_SECRET_KEY", "dev-inseguro-troque-esta-chave-gestar-digital")
 # Validade do token: um plantão.
 TOKEN_HORAS = int(os.getenv("GESTAR_TOKEN_HORAS", "12"))
-# Enquanto a tela de login (G-17) não existe, as rotas aceitam chamadas sem token.
-# Com "true", toda rota /api exige login.
-EXIGIR_LOGIN = os.getenv("EXIGIR_LOGIN", "false").lower() in ("1", "true", "sim", "yes")
+# Toda rota /api exige login (ligado no G-17, junto com a tela de login).
+# EXIGIR_LOGIN=false libera as rotas sem token (útil só para depurar pela linha de comando).
+EXIGIR_LOGIN = os.getenv("EXIGIR_LOGIN", "true").lower() in ("1", "true", "sim", "yes")

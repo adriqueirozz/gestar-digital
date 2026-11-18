@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import { getHealth } from "../api.js";
+import MenuUsuario from "./MenuUsuario.jsx";
 
 const LINKS = [
   { to: "/", label: "Painel" },
@@ -22,9 +23,12 @@ export default function Layout() {
     <div className="app">
       <header className="topo">
         <strong>Gestar Digital · COB</strong>
-        <span className={`api ${apiOnline ? "ok" : "off"}`}>
-          {apiOnline === null ? "verificando API..." : apiOnline ? "API online" : "API offline"}
-        </span>
+        <div className="topo-direita">
+          <span className={`api ${apiOnline ? "ok" : "off"}`}>
+            {apiOnline === null ? "verificando API..." : apiOnline ? "API online" : "API offline"}
+          </span>
+          <MenuUsuario />
+        </div>
       </header>
 
       <nav className="menu" aria-label="Principal">

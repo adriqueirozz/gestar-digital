@@ -41,6 +41,26 @@ PACIENTES = [
 ]
 
 
+# ---- usuários de demonstração (G-16): um por perfil. Senhas só para uso local! ----
+USUARIOS = [
+    dict(nome="Enfermagem (demo)", login="enfermagem", perfil="enfermagem", senha="gestar123"),
+    dict(nome="Médico (demo)", login="medico", perfil="medico", senha="gestar123"),
+    dict(nome="Gestão (demo)", login="gestao", perfil="gestao", senha="gestar123"),
+]
+
+
+def criar_usuarios(db) -> int:
+    """Cria os usuários de demonstração que ainda não existem. Devolve quantos criou."""
+    from app.auth import gerar_hash_senha
+
+    existentes = {login for (login,) in db.query(models.Usuario.login)}
+    novos = [models.Usuario(nome=u["nome"], login=u["login"], perfil=u["perfil"],
+                            senha_hash=gerar_hash_senha(u["senha"]))
+             for u in USUARIOS if u["login"] not in existentes]
+    db.add_all(novos)
+    return len(novos)
+
+
 def criar_catalogo(db) -> dict:
     locais = {}
 
@@ -111,8 +131,14 @@ def seed(com_pacientes: bool = True, recriar: bool = False) -> None:
 
     db = SessionLocal()
     try:
+        # usuários entram mesmo num banco já populado (bancos criados antes do G-16)
+        usuarios_criados = criar_usuarios(db)
+        db.commit()
+
         if db.query(models.Localizacao).count():
             print("O banco já está populado. Use --recriar para apagar tudo e começar de novo.")
+            if usuarios_criados:
+                print(f"{usuarios_criados} usuário(s) de demonstração criado(s): {_logins_demo()}.")
             return
 
         locais = criar_catalogo(db)
@@ -126,8 +152,13 @@ def seed(com_pacientes: bool = True, recriar: bool = False) -> None:
         print(f"Seed concluído: {len(leitos)} leitos ({len(disponiveis)} disponíveis), "
               f"{NUM_SALAS_PARTO} salas de parto, {NUM_SALAS_CIRURGIA} de cirurgia, 1 maca, "
               f"{len(PACIENTES) if com_pacientes else 0} pacientes.")
+        print(f"Usuários de demonstração: {_logins_demo()}.")
     finally:
         db.close()
+
+
+def _logins_demo() -> str:
+    return ", ".join(f"{u['login']} / {u['senha']}" for u in USUARIOS)
 
 
 if __name__ == "__main__":

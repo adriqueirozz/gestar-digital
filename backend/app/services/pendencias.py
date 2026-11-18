@@ -37,10 +37,12 @@ def serializar(pend, agora) -> dict:
         "restante_min": int((pend.vence_em - agora).total_seconds() / 60),
         "status": situacao(pend, agora),
         "concluida_em": iso(pend.concluida_em),
+        "criada_por": pend.criada_por.nome if pend.criada_por else None,
+        "concluida_por": pend.concluida_por.nome if pend.concluida_por else None,
     }
 
 
-def criar(db: Session, paciente, descricao: str, prazo_horas: int):
+def criar(db: Session, paciente, descricao: str, prazo_horas: int, usuario_id=None):
     texto = (descricao or "").strip()
     if not texto:
         raise RegraErro("Escreva a descrição da pendência.", 422)
@@ -53,17 +55,18 @@ def criar(db: Session, paciente, descricao: str, prazo_horas: int):
     criada = models.agora()
     pend = models.Pendencia(
         paciente_id=paciente.id, descricao=texto, prazo_horas=prazo_horas,
-        criada_em=criada, vence_em=criada + timedelta(hours=prazo_horas),
+        criada_em=criada, vence_em=criada + timedelta(hours=prazo_horas), criada_por_id=usuario_id,
     )
     db.add(pend)
     db.commit()
     return pend
 
 
-def concluir(db: Session, pend):
+def concluir(db: Session, pend, usuario_id=None):
     if pend.concluida_em:
         raise RegraErro("Esta pendência já foi concluída.")
     pend.concluida_em = models.agora()
+    pend.concluida_por_id = usuario_id
     db.commit()
     return pend
 

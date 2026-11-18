@@ -19,6 +19,8 @@ from app import config, models
 from app.database import get_db
 
 PERFIS = ("enfermagem", "medico", "gestao")
+# Perfis que podem alterar dados (G-19). Gestão é somente leitura.
+PERFIS_QUE_EDITAM = ("enfermagem", "medico")
 
 _ALGORITMO_HASH = "pbkdf2_sha256"
 _ITERACOES = 260_000
@@ -113,3 +115,15 @@ def exigir_perfil(*perfis: str):
         return usuario
 
     return checar
+
+
+def pode_editar(usuario: models.Usuario | None) -> bool:
+    return usuario is not None and usuario.perfil in PERFIS_QUE_EDITAM
+
+
+# Dependência das rotas de escrita (G-19): devolve o usuário, usado para registrar a autoria (G-18).
+editor = exigir_perfil(*PERFIS_QUE_EDITAM)
+
+
+def id_de(usuario: models.Usuario | None) -> int | None:
+    return usuario.id if usuario is not None else None

@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app import models
+from app.auth import editor
 from app.database import get_db
 from app.services.movimentacao import RegraErro, ocupante
 
@@ -50,7 +51,7 @@ def destinos(db: Session = Depends(get_db)):
     }
 
 
-@router.post("/{codigo}/situacao")
+@router.post("/{codigo}/situacao", dependencies=[Depends(editor)])
 def mudar_situacao(codigo: str, corpo: SituacaoIn, db: Session = Depends(get_db)):
     local = _local(db, codigo)
     if local.tipo != "leito":
@@ -64,7 +65,7 @@ def mudar_situacao(codigo: str, corpo: SituacaoIn, db: Session = Depends(get_db)
     return {"codigo": local.codigo, "situacao": local.situacao}
 
 
-@router.patch("/{codigo}")
+@router.patch("/{codigo}", dependencies=[Depends(editor)])
 def editar_maca(codigo: str, corpo: MacaIn, db: Session = Depends(get_db)):
     local = _local(db, codigo)
     if local.tipo != "maca":

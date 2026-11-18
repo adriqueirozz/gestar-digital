@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
 from app import models
+from app.auth import editor, id_de
 from app.database import get_db
 from app.services import importacao
 
@@ -9,11 +10,12 @@ router = APIRouter(prefix="/importacoes", tags=["importacoes"])
 
 
 @router.post("")
-async def enviar_planilha(arquivo: UploadFile = File(...), db: Session = Depends(get_db)):
+async def enviar_planilha(arquivo: UploadFile = File(...), db: Session = Depends(get_db),
+                          usuario=Depends(editor)):
     """Recebe um .csv ou .xlsx, importa as pacientes e devolve o resumo com os problemas encontrados."""
     conteudo = await arquivo.read()
     try:
-        return importacao.importar(db, conteudo, arquivo.filename or "planilha.csv")
+        return importacao.importar(db, conteudo, arquivo.filename or "planilha.csv", usuario_id=id_de(usuario))
     except ValueError as erro:  # coluna faltando, formato não suportado...
         raise HTTPException(status_code=400, detail=str(erro))
 

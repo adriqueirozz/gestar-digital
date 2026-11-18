@@ -104,6 +104,7 @@ class Parto(Base):
     nascimento: Mapped[str] = mapped_column(String(20))  # vivo | natimorto
     usuario_id: Mapped[int | None] = mapped_column(ForeignKey("usuarios.id"))
     paciente: Mapped["Paciente"] = relationship(back_populates="parto")
+    usuario: Mapped["Usuario | None"] = relationship()
 
 
 class Movimentacao(Base):
@@ -117,6 +118,7 @@ class Movimentacao(Base):
     observacao: Mapped[str | None] = mapped_column(String(255))
     usuario_id: Mapped[int | None] = mapped_column(ForeignKey("usuarios.id"))
     paciente: Mapped["Paciente"] = relationship(back_populates="movimentacoes")
+    usuario: Mapped["Usuario | None"] = relationship()
 
 
 class Pendencia(Base):
@@ -131,6 +133,8 @@ class Pendencia(Base):
     concluida_em: Mapped[datetime | None] = mapped_column(DateTime)
     concluida_por_id: Mapped[int | None] = mapped_column(ForeignKey("usuarios.id"))
     paciente: Mapped["Paciente"] = relationship(back_populates="pendencias")
+    criada_por: Mapped["Usuario | None"] = relationship(foreign_keys=[criada_por_id])
+    concluida_por: Mapped["Usuario | None"] = relationship(foreign_keys=[concluida_por_id])
 
 
 class Exportacao(Base):

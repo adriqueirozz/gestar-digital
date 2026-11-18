@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { concluirPendencia, criarPendencia, getPlantao } from "../api.js";
+import { usePodeEditar } from "../auth/useSessao.js";
 import Botao from "../components/ui/Botao.jsx";
 import Card from "../components/ui/Card.jsx";
 import Chip from "../components/ui/Chip.jsx";
@@ -64,6 +65,7 @@ export default function Pendencias() {
   const [erro, setErro] = useState("");
   const [filtro, setFiltro] = useState("todas");
   const [nova, setNova] = useState(null);
+  const podeEditar = usePodeEditar();
 
   const carregar = () =>
     getPlantao().then((d) => { setDados(d); setErro(""); }).catch((e) => setErro(e.message));
@@ -145,12 +147,14 @@ export default function Pendencias() {
                       <span className="pend-texto">
                         {p.descricao}
                         <small>
-                          {p.status === "concluida" ? `concluída às ${hora(p.concluida_em)}` : `${fmtRestante(p.restante_min)} · prazo ${p.prazo_horas}h`}
+                          {p.status === "concluida"
+                            ? `concluída às ${hora(p.concluida_em)}${p.concluida_por ? ` por ${p.concluida_por}` : ""}`
+                            : `${fmtRestante(p.restante_min)} · prazo ${p.prazo_horas}h${p.criada_por ? ` · criada por ${p.criada_por}` : ""}`}
                         </small>
                       </span>
                       <span className="pend-acoes">
                         <Tag tom={tomStatus[p.status]}>{rotuloStatus[p.status]}</Tag>
-                        {p.status !== "concluida" && (
+                        {podeEditar && p.status !== "concluida" && (
                           <span className="no-print"><Botao onClick={() => concluir(p.id)}>Concluir</Botao></span>
                         )}
                       </span>
@@ -158,9 +162,11 @@ export default function Pendencias() {
                   ))}
                 </ul>
               )}
-              <div className="no-print">
-                <Botao onClick={() => setNova({ id: i.id, nome: i.nome })}>+ Pendência</Botao>
-              </div>
+              {podeEditar && (
+                <div className="no-print">
+                  <Botao onClick={() => setNova({ id: i.id, nome: i.nome })}>+ Pendência</Botao>
+                </div>
+              )}
             </div>
           ))}
         </section>

@@ -75,3 +75,11 @@ body {
   .topo .api { display: none; }
   .menu-usuario-nome { max-width: 110px; }
 }
+.menu-usuario-leitura {
+  font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: var(--raio-pilula);
+  background: var(--aviso-bg); color: var(--aviso-tx); white-space: nowrap;
+}
+@media (max-width: 768px) {
+  .menu-usuario-perfil { display: none; }   /* no celular o aviso de leitura é mais importante que o perfil */
+  .menu-usuario-leitura { font-size: 11px; padding: 2px 6px; }
+}

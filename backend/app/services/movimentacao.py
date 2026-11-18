@@ -67,7 +67,7 @@ def _nova_maca(db: Session, descricao: str | None):
     return maca
 
 
-def alocar(db: Session, paciente, codigo: str, data_hora=None, observacao=None, local_maca=None):
+def alocar(db: Session, paciente, codigo: str, data_hora=None, observacao=None, local_maca=None, usuario_id=None):
     if paciente.status != "ativa":
         raise RegraErro("A paciente já saiu do COB.")
     quando = data_ou_agora(data_hora)
@@ -98,25 +98,27 @@ def alocar(db: Session, paciente, codigo: str, data_hora=None, observacao=None, 
         motivo="alocacao" if origem is None else "movimentacao",
         data_hora=quando,
         observacao=(observacao or "").strip() or None,
+        usuario_id=usuario_id,
     ))
     db.commit()
     return destino
 
 
-def registrar_parto(db: Session, paciente, tipo: str, nascimento: str, data_hora=None):
+def registrar_parto(db: Session, paciente, tipo: str, nascimento: str, data_hora=None, usuario_id=None):
     if paciente.status != "ativa":
         raise RegraErro("A paciente já saiu do COB.")
     if paciente.parto is not None:
         raise RegraErro("O parto desta paciente já foi registrado.")
     if tipo not in TIPOS_PARTO or nascimento not in NASCIMENTOS:
         raise RegraErro("Tipo de parto ou nascimento inválido.", 422)
-    db.add(models.Parto(paciente_id=paciente.id, data_hora=data_ou_agora(data_hora), tipo=tipo, nascimento=nascimento))
+    db.add(models.Parto(paciente_id=paciente.id, data_hora=data_ou_agora(data_hora), tipo=tipo, nascimento=nascimento,
+                        usuario_id=usuario_id))
     paciente.parindo = False
     paciente.perfil = "puerpera"
     db.commit()
 
 
-def registrar_saida(db: Session, paciente, desfecho: str, data_hora=None):
+def registrar_saida(db: Session, paciente, desfecho: str, data_hora=None, usuario_id=None):
     if paciente.status != "ativa":
         raise RegraErro("A paciente já saiu do COB.")
     if desfecho not in DESFECHOS:
@@ -131,6 +133,7 @@ def registrar_saida(db: Session, paciente, desfecho: str, data_hora=None):
         motivo="saida",
         data_hora=quando,
         observacao=f"Desfecho: {desfecho}",
+        usuario_id=usuario_id,
     ))
     paciente.status = "saiu"
     paciente.desfecho = desfecho

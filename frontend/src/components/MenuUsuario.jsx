@@ -43,6 +43,7 @@ export default function MenuUsuario() {
               onClick={() => setAberto((a) => !a)}>
         <span className="menu-usuario-nome">{usuario.nome}</span>
         <span className="menu-usuario-perfil">{NOME_PERFIL[usuario.perfil] || usuario.perfil}</span>
+        {!usuario.pode_editar && <span className="menu-usuario-leitura">Somente leitura</span>}
         <span aria-hidden="true">▾</span>
       </button>
 

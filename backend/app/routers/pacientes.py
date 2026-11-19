@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app import models
+from app.auth import editor, id_de
 from app.database import get_db
 from app.services import movimentacao
 from app.services import pendencias as srv_pend
@@ -76,13 +77,15 @@ def _detalhe(db: Session, p) -> dict:
         "bolsa_rota_horas": int(_horas(p.bolsa_rota_em, agora)) if p.bolsa_rota_em else None,
         "localizacao": {"codigo": loc.codigo, "nome": loc.nome, "tipo": loc.tipo} if loc else None,
         "parto": {"data_hora": _iso(p.parto.data_hora), "tipo": p.parto.tipo, "nascimento": p.parto.nascimento,
-                  "horas": int(_horas(p.parto.data_hora, agora))} if p.parto else None,
+                  "horas": int(_horas(p.parto.data_hora, agora)),
+                  "registrado_por": p.parto.usuario.nome if p.parto.usuario else None} if p.parto else None,
         "desfecho": p.desfecho, "saida_em": _iso(p.saida_em),
         "pendencias": [srv_pend.serializar(x, agora) for x in sorted(p.pendencias, key=lambda y: y.vence_em)
                        if not x.concluida_em],
         "historico": [
             {"data_hora": _iso(m.data_hora), "motivo": m.motivo, "origem": nome(m.origem_id),
-             "destino": nome(m.destino_id), "observacao": m.observacao}
+             "destino": nome(m.destino_id), "observacao": m.observacao,
+             "usuario": m.usuario.nome if m.usuario else None}
             for m in historico
         ],
     }
@@ -94,25 +97,28 @@ def detalhe(paciente_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("/{paciente_id}/alocar")
-def alocar(paciente_id: int, corpo: AlocacaoIn, db: Session = Depends(get_db)):
+def alocar(paciente_id: int, corpo: AlocacaoIn, db: Session = Depends(get_db), usuario=Depends(editor)):
     p = _paciente(db, paciente_id)
-    destino = movimentacao.alocar(db, p, corpo.destino, corpo.data_hora, corpo.observacao, corpo.local_maca)
+    destino = movimentacao.alocar(db, p, corpo.destino, corpo.data_hora, corpo.observacao, corpo.local_maca,
+                                  usuario_id=id_de(usuario))
     return {"ok": True, "destino": destino.codigo}
 
 
 @router.post("/{paciente_id}/parto")
-def parto(paciente_id: int, corpo: PartoIn, db: Session = Depends(get_db)):
-    movimentacao.registrar_parto(db, _paciente(db, paciente_id), corpo.tipo, corpo.nascimento, corpo.data_hora)
+def parto(paciente_id: int, corpo: PartoIn, db: Session = Depends(get_db), usuario=Depends(editor)):
+    movimentacao.registrar_parto(db, _paciente(db, paciente_id), corpo.tipo, corpo.nascimento, corpo.data_hora,
+                                 usuario_id=id_de(usuario))
     return {"ok": True}
 
 
 @router.post("/{paciente_id}/saida")
-def saida(paciente_id: int, corpo: SaidaIn, db: Session = Depends(get_db)):
-    movimentacao.registrar_saida(db, _paciente(db, paciente_id), corpo.desfecho, corpo.data_hora)
+def saida(paciente_id: int, corpo: SaidaIn, db: Session = Depends(get_db), usuario=Depends(editor)):
+    movimentacao.registrar_saida(db, _paciente(db, paciente_id), corpo.desfecho, corpo.data_hora,
+                                 usuario_id=id_de(usuario))
     return {"ok": True}
 
 
-@router.patch("/{paciente_id}/sinalizacoes")
+@router.patch("/{paciente_id}/sinalizacoes", dependencies=[Depends(editor)])
 def sinalizacoes(paciente_id: int, corpo: SinalizacoesIn, db: Session = Depends(get_db)):
     movimentacao.atualizar_sinalizacoes(db, _paciente(db, paciente_id), corpo.model_dump(exclude_unset=True))
     return {"ok": True}

@@ -9,7 +9,8 @@ router = APIRouter(prefix="/auth", tags=["autenticacao"])
 
 
 def _usuario_publico(u: models.Usuario) -> dict:
-    return {"id": u.id, "nome": u.nome, "login": u.login, "perfil": u.perfil}
+    return {"id": u.id, "nome": u.nome, "login": u.login, "perfil": u.perfil,
+            "pode_editar": auth.pode_editar(u)}
 
 
 @router.post("/login")

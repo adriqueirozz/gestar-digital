@@ -180,7 +180,24 @@ Variáveis de ambiente (opcionais):
 | `GESTAR_SECRET_KEY` | chave de desenvolvimento | Assina os tokens. **Obrigatório trocar** fora da máquina local |
 | `GESTAR_TOKEN_HORAS` | `12` | Validade do token, em horas |
 
-Para restringir uma rota a perfis: `dependencies=[Depends(exigir_perfil("enfermagem", "medico"))]` (de `app.auth`).
+### O que cada perfil pode fazer
+
+| Ação | Enfermagem | Médico | Gestão |
+|---|---|---|---|
+| Ver painel, fila, ficha, pendências, plantão e relatório | ✅ | ✅ | ✅ |
+| Alocar e mover pacientes, registrar parto e saída | ✅ | ✅ | ❌ |
+| Editar sinalizações, status do leito e local da maca | ✅ | ✅ | ❌ |
+| Criar e concluir pendências | ✅ | ✅ | ❌ |
+| Importar a planilha | ✅ | ✅ | ❌ |
+
+- **Gestão é somente leitura:** o backend responde **403** em qualquer rota de escrita, e o frontend esconde os botões de edição e mostra "Somente leitura" no cabeçalho.
+- **Rota nova que altera dados:** coloque `usuario=Depends(editor)` (de `app.auth`) e passe `usuario_id=id_de(usuario)` para o serviço, para registrar quem fez.
+- **Botão novo de edição no frontend:** mostre só se `usePodeEditar()` (de `src/auth/useSessao.js`) for `true`.
+- Para mudar quem pode editar, altere `PERFIS_QUE_EDITAM` em `backend/app/auth.py`. Para uma regra específica de uma rota, use `Depends(exigir_perfil("medico"))`.
+
+### Quem alterou cada informação
+
+Movimentações (alocar, mover, saída), partos, pendências (criação e conclusão) e importações guardam **quem fez e quando**. A ficha da paciente mostra "por Fulano" no histórico, no parto e nas pendências; a passagem de plantão mostra quem criou e quem concluiu cada pendência.
 
 ## API (resumo)
 

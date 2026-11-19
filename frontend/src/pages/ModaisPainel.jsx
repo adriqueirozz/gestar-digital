@@ -7,6 +7,7 @@ import Botao from "../components/ui/Botao.jsx";
 import Chip from "../components/ui/Chip.jsx";
 import Modal from "../components/ui/Modal.jsx";
 import Tag from "../components/ui/Tag.jsx";
+import { usePodeEditar } from "../auth/useSessao.js";
 import "./modais.css";
 import { fmtRestante, rotuloStatus, tomStatus } from "./pendenciasUtil.js";
 
@@ -61,6 +62,7 @@ export function ModalPaciente({ id, onFechar, onMudou, onAlocar }) {
   const [parto, setParto] = useState({ tipo: "normal", nascimento: "vivo", data_hora: agoraLocal() });
   const [saida, setSaida] = useState({ desfecho: "casa", data_hora: agoraLocal() });
   const { erro, ocupado, executar } = useAcao();
+  const podeEditar = usePodeEditar();
 
   async function carregar() {
     const dados = await getPaciente(id);
@@ -99,12 +101,15 @@ export function ModalPaciente({ id, onFechar, onMudou, onAlocar }) {
             <div><small>GPA / IG</small>{p.gpa || "—"} · {p.ig || "—"}</div>
             <div><small>Entrada no COB</small>{fmt(p.chegada_em)}{p.chegada_tem_hora ? "" : " (sem hora)"}</div>
             <div><small>Tempo no COB</small>{fmtEspera(p.espera_min)}</div>
-            <div><small>Pós-parto</small>{p.parto ? `${p.parto.horas}h (${p.parto.tipo}, ${p.parto.nascimento})` : "—"}</div>
+            <div><small>Pós-parto</small>{p.parto ? `${p.parto.horas}h (${p.parto.tipo}, ${p.parto.nascimento})` : "—"}
+              {p.parto?.registrado_por && <small>registrado por {p.parto.registrado_por}</small>}</div>
             <div><small>Diagnóstico</small>{p.diagnostico || "—"}</div>
           </div>
           {p.observacoes && <div className="dados"><div><small>Observações da planilha</small>{p.observacoes}</div></div>}
 
-          {ativa && (
+          {ativa && !podeEditar && <SinalizacoesLeitura p={p} />}
+
+          {ativa && podeEditar && (
             <>
               <h3 className="secao-titulo">Sinalizações</h3>
               <div className="marcas">
@@ -196,6 +201,7 @@ export function ModalPaciente({ id, onFechar, onMudou, onAlocar }) {
             <PendenciasDaPaciente
               pacienteId={p.id}
               pendencias={p.pendencias}
+              podeEditar={podeEditar}
               aoMudar={async () => { await carregar(); onMudou(); }}
             />
           )}
@@ -206,13 +212,32 @@ export function ModalPaciente({ id, onFechar, onMudou, onAlocar }) {
             {p.historico.map((h, i) => (
               <li key={i}>
                 <b>{MOTIVO[h.motivo] || h.motivo}</b> · {h.origem ? `${h.origem} → ` : ""}{h.destino || "fora do COB"}
-                <br /><small>{fmt(h.data_hora)}{h.observacao ? ` · ${h.observacao}` : ""}</small>
+                <br /><small>{fmt(h.data_hora)}{h.usuario ? ` · por ${h.usuario}` : ""}{h.observacao ? ` · ${h.observacao}` : ""}</small>
               </li>
             ))}
           </ul>
         </div>
       )}
     </Modal>
+  );
+}
+
+/* ------------------------------------------------------------------ sinalizações (somente leitura) */
+function SinalizacoesLeitura({ p }) {
+  const ativas = MARCAS.filter(([campo]) => p[campo]).map(([, rotulo]) => rotulo);
+  return (
+    <>
+      <h3 className="secao-titulo">Sinalizações</h3>
+      <div className="marcas">
+        {ativas.length === 0 && !p.alergia && p.bolsa_rota_horas == null && <span className="nota">Nenhuma sinalização.</span>}
+        {ativas.map((r) => <Tag key={r} tom="info">{r}</Tag>)}
+        {p.alergia && <Tag tom="alerta">Alergia: {p.alergia}</Tag>}
+        {p.bolsa_rota_horas != null && <Tag tom="aviso">Bolsa rota há {p.bolsa_rota_horas}h</Tag>}
+      </div>
+      {p.bolsa_rota_horas != null && p.bolsa_rota_horas >= 18 && (
+        <p className="erro">Bolsa rota há {p.bolsa_rota_horas}h: acima de 18h, avaliar ATB (decisão da equipe).</p>
+      )}
+    </>
   );
 }
 
@@ -345,7 +370,7 @@ export function ModalMaca({ maca, onFechar, onMudou }) {
 }
 
 /* ------------------------------------------------------------------ pendências da paciente */
-function PendenciasDaPaciente({ pacienteId, pendencias, aoMudar }) {
+function PendenciasDaPaciente({ pacienteId, pendencias, podeEditar, aoMudar }) {
   const [descricao, setDescricao] = useState("");
   const [prazo, setPrazo] = useState(12);
   const { erro, ocupado, executar } = useAcao();
@@ -359,13 +384,16 @@ function PendenciasDaPaciente({ pacienteId, pendencias, aoMudar }) {
         {pendencias.map((x) => (
           <li key={x.id}>
             <b>{x.descricao}</b> <Tag tom={tomStatus[x.status]}>{rotuloStatus[x.status]}</Tag>
-            <br /><small>{fmtRestante(x.restante_min)} · prazo {x.prazo_horas}h</small>{" "}
-            <Botao disabled={ocupado} onClick={() => executar(async () => { await concluirPendencia(x.id); await aoMudar(); })}>
-              Concluir
-            </Botao>
+            <br /><small>{fmtRestante(x.restante_min)} · prazo {x.prazo_horas}h{x.criada_por ? ` · criada por ${x.criada_por}` : ""}</small>{" "}
+            {podeEditar && (
+              <Botao disabled={ocupado} onClick={() => executar(async () => { await concluirPendencia(x.id); await aoMudar(); })}>
+                Concluir
+              </Botao>
+            )}
           </li>
         ))}
       </ul>
+      {podeEditar && (<>
       <div className="campos-linha">
         <Campo rotulo="Nova pendência">
           <input value={descricao} maxLength={200} onChange={(e) => setDescricao(e.target.value)} placeholder="ex.: coletar exames" />
@@ -387,6 +415,7 @@ function PendenciasDaPaciente({ pacienteId, pendencias, aoMudar }) {
           Adicionar pendência
         </Botao>
       </div>
+      </>)}
     </>
   );
 }

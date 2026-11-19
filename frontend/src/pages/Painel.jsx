@@ -7,6 +7,7 @@ import Tag from "../components/ui/Tag.jsx";
 import { ModalAlocar, ModalLeito, ModalMaca, ModalPaciente } from "./ModaisPainel.jsx";
 import "./painel.css";
 import { Link } from "react-router-dom";
+import { usePodeEditar } from "../auth/useSessao.js";
 
 // perfil -> cor da etiqueta (o tom "rosa" precisa existir no ui.css)
 const TOM_PERFIL = { gestante: "rosa", puerpera: "roxo", abortamento: "aviso" };
@@ -80,6 +81,7 @@ export default function Painel() {
   const [filtro, setFiltro] = useState("todos");
   // modal aberto: null | {tipo: "paciente", id} | {tipo: "alocar", paciente} | {tipo: "leito", leito} | {tipo: "maca", maca}
   const [modal, setModal] = useState(null);
+  const podeEditar = usePodeEditar();
 
   const recarregar = () => getPainel().then((d) => { setDados(d); setErro(false); }).catch(() => setErro(true));
   useEffect(() => { recarregar(); }, []);
@@ -94,7 +96,10 @@ export default function Painel() {
   const combina = (leito) =>
     filtro === "todos" || filtro === leito.situacao || (leito.paciente && filtro === leito.paciente.perfil);
 
-  const aoClicarLeito = (l) => (l.paciente ? abrirPaciente(l.paciente.id) : setModal({ tipo: "leito", leito: l }));
+  const aoClicarLeito = (l) => {
+    if (l.paciente) abrirPaciente(l.paciente.id);
+    else if (podeEditar) setModal({ tipo: "leito", leito: l }); // Gestão não muda o status do leito
+  };
 
   return (
     <div className="painel">
@@ -173,9 +178,11 @@ export default function Painel() {
                       <b>{formatarEspera(p.espera_min)}</b>{p.espera_min != null && " de espera"}
                       <br /><span>{p.onde}</span>
                     </div>
-                    <Botao variante="primario" onClick={() => setModal({ tipo: "alocar", paciente: { id: p.id, nome: p.nome } })}>
-                      Alocar
-                    </Botao>
+                    {podeEditar && (
+                      <Botao variante="primario" onClick={() => setModal({ tipo: "alocar", paciente: { id: p.id, nome: p.nome } })}>
+                        Alocar
+                      </Botao>
+                    )}
                   </div>
                 </div>
               ))}
@@ -240,7 +247,7 @@ export default function Painel() {
                 <div className="maca" key={m.codigo}>
                   <div className="maca-linha">
                     <button type="button" className="link maca-nome" onClick={() => abrirPaciente(m.id)}>{m.nome}</button>
-                    <Botao onClick={() => setModal({ tipo: "maca", maca: m })}>Editar local</Botao>
+                    {podeEditar && <Botao onClick={() => setModal({ tipo: "maca", maca: m })}>Editar local</Botao>}
                   </div>
                   <span>{m.local}</span>
                   <small>{m.espera_min == null ? "hora de entrada não informada" : `em maca há ${formatarEspera(m.espera_min)}`}</small>

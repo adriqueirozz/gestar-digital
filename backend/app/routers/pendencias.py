@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app import models
+from app.auth import editor, id_de
 from app.database import get_db
 from app.routers.painel import _tags
 from app.services import pendencias as srv
@@ -35,20 +36,20 @@ def _grupo(loc) -> str:
 
 
 @router.post("")
-def criar(corpo: PendenciaIn, db: Session = Depends(get_db)):
+def criar(corpo: PendenciaIn, db: Session = Depends(get_db), usuario=Depends(editor)):
     paciente = db.get(models.Paciente, corpo.paciente_id)
     if paciente is None:
         raise RegraErro("Paciente não encontrada.", 404)
-    pend = srv.criar(db, paciente, corpo.descricao, corpo.prazo_horas)
+    pend = srv.criar(db, paciente, corpo.descricao, corpo.prazo_horas, usuario_id=id_de(usuario))
     return srv.serializar(pend, models.agora())
 
 
 @router.post("/{pendencia_id}/concluir")
-def concluir(pendencia_id: int, db: Session = Depends(get_db)):
+def concluir(pendencia_id: int, db: Session = Depends(get_db), usuario=Depends(editor)):
     pend = db.get(models.Pendencia, pendencia_id)
     if pend is None:
         raise RegraErro("Pendência não encontrada.", 404)
-    return srv.serializar(srv.concluir(db, pend), models.agora())
+    return srv.serializar(srv.concluir(db, pend, usuario_id=id_de(usuario)), models.agora())
 
 
 @router.get("/plantao")

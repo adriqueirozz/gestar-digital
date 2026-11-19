@@ -1,4 +1,20 @@
+import { EVENTO_SESSAO_EXPIRADA, getToken, setToken } from "./auth/sessao.js";
+
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+
+// Toda chamada à API leva o token do usuário logado (G-17).
+// Se a API responder 401 (token vencido ou inválido), a sessão é encerrada e o app volta ao login.
+async function requisitar(caminho, opcoes = {}) {
+  const token = getToken();
+  const headers = { ...(opcoes.headers || {}) };
+  if (token) headers.Authorization = `Bearer ${token}`;
+  const resposta = await fetch(`${API_URL}${caminho}`, { ...opcoes, headers });
+  if (resposta.status === 401 && token) {
+    setToken(null);
+    window.dispatchEvent(new Event(EVENTO_SESSAO_EXPIRADA));
+  }
+  return resposta;
+}
 
 export async function getHealth() {
   const resposta = await fetch(`${API_URL}/health`);
@@ -7,7 +23,7 @@ export async function getHealth() {
 }
 
 export async function getPainel() {
-  const resposta = await fetch(`${API_URL}/api/painel`);
+  const resposta = await requisitar("/api/painel");
   if (!resposta.ok) throw new Error("Erro ao carregar o painel");
   return resposta.json();
 }
@@ -15,20 +31,20 @@ export async function getPainel() {
 export async function enviarPlanilha(arquivo) {
   const dados = new FormData();
   dados.append("arquivo", arquivo);
-  const resposta = await fetch(`${API_URL}/api/importacoes`, { method: "POST", body: dados });
+  const resposta = await requisitar("/api/importacoes", { method: "POST", body: dados });
   const corpo = await resposta.json();
   if (!resposta.ok) throw new Error(corpo.detail || "Erro ao importar");
   return corpo;
 }
 
 export async function getUltimaImportacao() {
-  const resposta = await fetch(`${API_URL}/api/importacoes/ultima`);
+  const resposta = await requisitar("/api/importacoes/ultima");
   if (!resposta.ok) throw new Error("Erro ao carregar a importação");
   return resposta.json();
 }
 
 async function chamar(metodo, caminho, corpo) {
-  const resposta = await fetch(`${API_URL}${caminho}`, {
+  const resposta = await requisitar(caminho, {
     method: metodo,
     headers: corpo ? { "Content-Type": "application/json" } : undefined,
     body: corpo ? JSON.stringify(corpo) : undefined,
@@ -45,6 +61,26 @@ async function chamar(metodo, caminho, corpo) {
   }
   return dados;
 }
+
+// ---- autenticação (G-16/G-17) ----
+// O login não passa por requisitar(): uma senha errada na troca de usuário não deve derrubar quem já está logado.
+export async function entrar(login, senha) {
+  let resposta;
+  try {
+    resposta = await fetch(`${API_URL}/api/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ username: login, password: senha }),
+    });
+  } catch {
+    throw new Error("Não foi possível falar com a API. Ela está rodando?");
+  }
+  const dados = await resposta.json().catch(() => null);
+  if (!resposta.ok) throw new Error((dados && dados.detail) || "Não foi possível entrar.");
+  return dados; // { access_token, token_type, usuario }
+}
+
+export const getUsuarioLogado = () => chamar("GET", "/api/auth/me");
 
 export const getPaciente = (id) => chamar("GET", `/api/pacientes/${id}`);
 export const alocarPaciente = (id, dados) => chamar("POST", `/api/pacientes/${id}/alocar`, dados);

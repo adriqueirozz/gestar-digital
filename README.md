@@ -100,7 +100,7 @@ O banco é um arquivo local (`backend/gestar.db`). Não há nada para instalar n
 
 | Comando (dentro de `backend/`) | O que faz |
 |---|---|
-| `python -m app.seed` | Cria o banco e popula com leitos, salas e 8 pacientes de demonstração |
+| `python -m app.seed` | Cria o banco e popula com leitos, salas, 8 pacientes e 3 usuários de demonstração. Num banco já populado, só cria os usuários que faltarem |
 | `python -m app.seed --sem-pacientes` | Só o catálogo (leitos, salas, macas). Ideal para demonstrar a importação |
 | `python -m app.seed --recriar` | **Apaga tudo** e popula de novo |
 | `python -m app.seed --recriar --sem-pacientes` | Apaga tudo e deixa só o catálogo |
@@ -157,11 +157,37 @@ python -m pytest -v
 
 Use `python -m pytest` (e não só `pytest`) para o Python encontrar o pacote `app`.
 
+## Login e perfis
+
+Perfis: `enfermagem`, `medico` e `gestao`. O seed cria um usuário de demonstração para cada um (senhas só para uso local):
+
+| Login | Senha | Perfil |
+|---|---|---|
+| `enfermagem` | `gestar123` | Enfermagem |
+| `medico` | `gestar123` | Médico |
+| `gestao` | `gestar123` | Gestão |
+
+- `POST /api/auth/login` recebe `username` e `password` (formulário) e devolve um token válido por 12h. Envie-o nas outras chamadas no cabeçalho `Authorization: Bearer <token>`.
+- No `/docs`, use o botão **Authorize** para entrar com um desses usuários.
+- As senhas ficam no banco só como hash (PBKDF2-SHA256).
+
+Variáveis de ambiente (opcionais):
+
+| Variável | Padrão | Para quê |
+|---|---|---|
+| `EXIGIR_LOGIN` | `false` | Com `true`, toda rota `/api` exige token. Fica `false` até a tela de login (G-17) existir |
+| `GESTAR_SECRET_KEY` | chave de desenvolvimento | Assina os tokens. **Obrigatório trocar** fora da máquina local |
+| `GESTAR_TOKEN_HORAS` | `12` | Validade do token, em horas |
+
+Para restringir uma rota a perfis: `dependencies=[Depends(exigir_perfil("enfermagem", "medico"))]` (de `app.auth`).
+
 ## API (resumo)
 
 | Método | Rota | Descrição |
 |---|---|---|
 | GET | `/health` | Verifica se a API está no ar |
+| POST | `/api/auth/login` | Entra com login e senha e devolve o token |
+| GET | `/api/auth/me` | Dados do usuário logado |
 | GET | `/api/painel` | Ocupação, enfermarias, salas, macas e fila de espera |
 | POST | `/api/importacoes` | Importa um CSV/Excel (campo `arquivo`) e devolve o resumo com os problemas |
 | GET | `/api/importacoes/ultima` | Resumo da última importação |

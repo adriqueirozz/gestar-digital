@@ -7,7 +7,7 @@ from app.database import Base, engine
 from app import models  # noqa: F401  (registra as tabelas)
 from app.auth import usuario_atual
 
-from app.routers import auth, health, painel, importacoes, pacientes, locais, pendencias
+from app.routers import auth, health, painel, importacoes, pacientes, locais, pendencias, relatorios
 
 app = FastAPI(title="Gestar Digital API")
 
@@ -29,5 +29,6 @@ app.include_router(importacoes.router, prefix="/api", dependencies=protegida)
 app.include_router(pacientes.router, prefix="/api", dependencies=protegida)   # /api/pacientes/{id}...
 app.include_router(locais.router, prefix="/api", dependencies=protegida)      # /api/locais/...
 app.include_router(pendencias.router, prefix="/api", dependencies=protegida)  # /api/pendencias
+app.include_router(relatorios.router, prefix="/api", dependencies=protegida)
 
 Base.metadata.create_all(bind=engine)

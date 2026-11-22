@@ -80,6 +80,44 @@ export async function entrar(login, senha) {
   return dados; // { access_token, token_type, usuario }
 }
 
+
+export async function getRelatorioMensal(mes) {
+  const resposta = await requisitar(
+    `/api/relatorios/mensal?mes=${encodeURIComponent(mes)}`
+  );
+
+  if (!resposta.ok) {
+    const erro = await resposta.json().catch(() => null);
+    throw new Error(erro?.detail || "Erro ao carregar relatório.");
+  }
+
+  return resposta.json();
+}
+
+async function baixarRelatorio(tipo, mes) {
+  const resposta = await requisitar(
+    `/api/relatorios/mensal/${tipo}?mes=${encodeURIComponent(mes)}`
+  );
+
+  if (!resposta.ok) {
+    const erro = await resposta.json().catch(() => null);
+    throw new Error(erro?.detail || "Erro ao exportar relatório.");
+  }
+
+  const arquivo = await resposta.blob();
+  const url = window.URL.createObjectURL(arquivo);
+  const link = document.createElement("a");
+
+  link.href = url;
+  link.download = `relatorio-${mes}.${tipo}`;
+
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+
+  window.URL.revokeObjectURL(url);
+}
+
 export const getUsuarioLogado = () => chamar("GET", "/api/auth/me");
 
 export const getPaciente = (id) => chamar("GET", `/api/pacientes/${id}`);
@@ -94,3 +132,6 @@ export const editarMaca = (codigo, descricao) => chamar("PATCH", `/api/locais/${
 export const getPlantao = () => chamar("GET", "/api/pendencias/plantao");
 export const criarPendencia = (dados) => chamar("POST", "/api/pendencias", dados);
 export const concluirPendencia = (id) => chamar("POST", `/api/pendencias/${id}/concluir`);
+
+export const exportarRelatorioPDF = (mes) => baixarRelatorio("pdf", mes);
+export const exportarRelatorioCSV = (mes) => baixarRelatorio("csv", mes);

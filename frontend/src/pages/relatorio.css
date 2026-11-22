@@ -1,0 +1,244 @@
+
+.relatorio {
+  margin: -16px;
+  padding: 20px 22px;
+  min-height: calc(100vh - 100px);
+  background: #f1f1f1;
+}
+
+.relatorio {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  color: #292929;
+}
+
+/* Cabeçalho */
+
+.relatorio-topo {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 20px;
+  flex-wrap: wrap;
+  padding: 4px 0 0;
+}
+
+.relatorio-topo h1 {
+  margin: 0 0 8px;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.relatorio-topo p {
+  margin: 0;
+  font-size: 12px;
+  color: #777;
+  line-height: 1.5;
+}
+
+/* Filtros e botões */
+
+.relatorio-acoes {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.relatorio-seletor {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.relatorio-seletor span {
+  font-size: 11px;
+  color: #777;
+}
+
+.relatorio-seletor input {
+  height: 37px;
+  min-width: 160px;
+  padding: 0 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #fff;
+  color: #292929;
+  font: inherit;
+  font-size: 12px;
+}
+
+.relatorio-botao {
+  min-height: 37px;
+  padding: 0 15px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #fff;
+  color: #292929;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s;
+}
+
+.relatorio-botao:hover:not(:disabled) {
+  background: #f1f1f1;
+}
+
+.relatorio-botao-escuro {
+  background: #292929;
+  border-color: #292929;
+  color: #fff;
+}
+
+.relatorio-botao-escuro:hover:not(:disabled) {
+  background: #444;
+}
+
+.relatorio-botao:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+/* Cards dos indicadores */
+
+.relatorio-grade {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.relatorio-card {
+  min-height: 88px;
+  padding: 15px;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+
+.relatorio-card h2 {
+  margin: 0 0 9px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #292929;
+}
+
+.relatorio-indicadores {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 18px;
+}
+
+.relatorio-indicador {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.relatorio-indicador strong {
+  font-size: 22px;
+  line-height: 1.15;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.relatorio-indicador span {
+  font-size: 10px;
+  color: #888;
+}
+
+/* Prévia CSV */
+
+.relatorio-csv {
+  min-height: 165px;
+  padding: 15px;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+
+.relatorio-csv h2 {
+  margin: 0 0 7px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.relatorio-csv-conteudo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-wrap: anywhere;
+}
+
+.relatorio-csv-linha {
+  font-size: 10px;
+  color: #888;
+  line-height: 1.3;
+}
+
+.relatorio-rodape {
+  margin: 0;
+  font-size: 11px;
+  color: #777;
+  text-align: right;
+}
+
+/* Estados */
+
+.relatorio-estado {
+  padding: 40px 15px;
+  text-align: center;
+  color: #777;
+  font-size: 13px;
+}
+
+.relatorio-erro {
+  padding: 12px 15px;
+  background: #fbe9e7;
+  color: #8f1d16;
+  border: 1px solid #e7c2be;
+  border-radius: 7px;
+  font-size: 13px;
+}
+
+/* Responsividade */
+
+@media (max-width: 900px) {
+  .relatorio-grade {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .relatorio-topo {
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 600px) {
+  .relatorio-grade {
+    grid-template-columns: 1fr;
+  }
+
+  .relatorio-acoes {
+    width: 100%;
+    align-items: stretch;
+  }
+
+  .relatorio-seletor {
+    width: 100%;
+  }
+
+  .relatorio-seletor input {
+    width: 100%;
+  }
+
+  .relatorio-botao {
+    flex: 1;
+  }
+
+  .relatorio-card {
+    min-height: 90px;
+  }
+}

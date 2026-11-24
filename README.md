@@ -159,7 +159,7 @@ Use `python -m pytest` (e não só `pytest`) para o Python encontrar o pacote `a
 
 ## Login e perfis
 
-Perfis: `enfermagem`, `medico` e `gestao`. O seed cria um usuário de demonstração para cada um (senhas só para uso local):
+Perfis: `enfermagem`, `medico` e `gestao`. O seed cria um usuário de demonstração para cada um (senhas só para uso local; no protótipo hospedado a senha é a da variável `GESTAR_SENHA_DEMO`):
 
 | Login | Senha | Perfil |
 |---|---|---|
@@ -210,6 +210,41 @@ Movimentações (alocar, mover, saída), partos, pendências (criação e conclu
 | POST | `/api/importacoes` | Importa um CSV/Excel (campo `arquivo`) e devolve o resumo com os problemas |
 | GET | `/api/importacoes/ultima` | Resumo da última importação |
 
+## Protótipo hospedado (Render)
+
+O protótipo para clientes roda no [Render](https://render.com), no plano gratuito, a partir do `Dockerfile` e do `render.yaml` na raiz. A API e as telas ficam **no mesmo endereço**.
+
+**Publicar pela primeira vez:** render.com → **New → Blueprint** → escolher este repositório → informar a `GESTAR_SENHA_DEMO` quando o Render pedir. A `GESTAR_SECRET_KEY` é gerada sozinha.
+Se o repositório não aparecer na lista, quem é dona dele no GitHub precisa autorizar o app do Render para este repositório.
+
+**Atualizar:** cada merge na `main` publica a nova versão sozinho (leva alguns minutos).
+
+| Variável (no Render) | Para quê |
+|---|---|
+| `GESTAR_SENHA_DEMO` | Senha dos usuários `enfermagem`, `medico` e `gestao` no protótipo. **Não use a `gestar123`**: ela está neste README, que é público |
+| `GESTAR_SECRET_KEY` | Assina os tokens de login. Gerada pelo Render |
+
+Como o protótipo se comporta:
+- **Dados:** o banco nasce com os dados de demonstração a cada reinício. No plano gratuito o servidor "dorme" depois de 15 minutos sem acesso e apaga o disco, então tudo o que for feito lá **volta ao estado inicial**. Não envie planilhas com dados reais.
+- **Primeiro acesso do dia:** pode levar até 1 minuto (o servidor está acordando).
+- **Segurança:**
+  - o servidor **não sobe** se a chave ou a senha forem as padrão do repositório;
+  - 8 senhas erradas seguidas bloqueiam aquele IP por 15 minutos;
+  - a planilha enviada pode ter no máximo 5 MB;
+  - a documentação da API (`/docs`) e o guia de estilo (`/componentes`) ficam desligados;
+  - o site não aparece em buscadores.
+
+Testar a imagem no seu computador (precisa do Docker):
+```bash
+docker build -t gestar .
+docker run --rm -p 8000:8000 -e GESTAR_SECRET_KEY="$(python -c 'import secrets;print(secrets.token_urlsafe(48))')" -e GESTAR_SENHA_DEMO="uma-senha-qualquer" gestar
+# abra http://localhost:8000
+```
+
+**Tirar do ar:**
+1. No Render, abra o serviço → **Settings → Delete Web Service**. O endereço para de funcionar na hora e o serviço some da conta.
+2. No GitHub, em **Settings → Applications → Render → Configure**, remova o acesso ao repositório (ou desinstale o app).
+
 ## Problemas comuns
 
 | Sintoma | Solução |
@@ -234,7 +269,7 @@ Movimentações (alocar, mover, saída), partos, pendências (criação e conclu
 ## Limites do MVP
 
 - Só dados simulados. Nenhum dado real de paciente deve entrar no repositório.
-- Banco SQLite local, sem deploy. A hospedagem fica como evolução futura.
+- Banco SQLite. O protótipo hospedado (Render, plano gratuito) volta aos dados de demonstração a cada reinício; uma hospedagem com dados que persistem fica como evolução futura.
 - A integração com o AGHU e a leitura automática da planilha do Teams (Microsoft Graph) são evoluções futuras. Hoje a entrada é por CSV/Excel.
 - O perfil da paciente (gestante, puérpera, abortamento) é uma sugestão inferida do diagnóstico e deve ser validada pela equipe do setor.
 - A planilha traz só a data de entrada, sem a hora. Por isso o tempo de espera aparece como "hora de entrada não informada" quando falta o horário.

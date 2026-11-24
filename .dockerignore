@@ -1,0 +1,19 @@
+# Só o necessário entra na imagem: nada de segredos locais, bancos, dependências instaladas ou documentos.
+.git
+**/.env
+**/.env.*
+**/*.db
+**/*.db-journal
+**/node_modules
+**/dist
+**/.venv
+**/venv
+**/__pycache__
+**/.pytest_cache
+backend/tests
+data
+*.md
+**/*.md
+*-imagens
+.claude
+start.sh

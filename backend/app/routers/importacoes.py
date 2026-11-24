@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
-from app import models
+from app import config, models
 from app.auth import editor, id_de
 from app.database import get_db
 from app.services import importacao
@@ -13,7 +13,10 @@ router = APIRouter(prefix="/importacoes", tags=["importacoes"])
 async def enviar_planilha(arquivo: UploadFile = File(...), db: Session = Depends(get_db),
                           usuario=Depends(editor)):
     """Recebe um .csv ou .xlsx, importa as pacientes e devolve o resumo com os problemas encontrados."""
-    conteudo = await arquivo.read()
+    limite = config.IMPORTACAO_MAX_MB * 1024 * 1024
+    conteudo = await arquivo.read(limite + 1)  # não lê além do limite
+    if len(conteudo) > limite:
+        raise HTTPException(status_code=413, detail=f"Arquivo grande demais (máximo {config.IMPORTACAO_MAX_MB} MB).")
     try:
         return importacao.importar(db, conteudo, arquivo.filename or "planilha.csv", usuario_id=id_de(usuario))
     except ValueError as erro:  # coluna faltando, formato não suportado...

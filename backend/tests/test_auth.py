@@ -188,4 +188,87 @@ def test_seed_cria_um_usuario_por_perfil_sem_duplicar(banco):
     perfis = {u.perfil for u in banco.query(models.Usuario)}
     assert perfis == set(auth.PERFIS)
     for u in USUARIOS:
-        assert auth.autenticar(banco, u["login"], u["senha"]) is not None
+        assert auth.autenticar(banco, u["login"], config.SENHA_DEMO) is not None
+
+
+def test_seed_usa_a_senha_demo_configurada(banco, monkeypatch):
+    from app.seed import criar_usuarios
+
+    monkeypatch.setattr(config, "SENHA_DEMO", "outra-senha-do-prototipo")
+    criar_usuarios(banco)
+    banco.commit()
+    assert auth.autenticar(banco, "gestao", "outra-senha-do-prototipo") is not None
+    assert auth.autenticar(banco, "gestao", "gestar123") is None
+
+
+# ---------------------------------------------------------------- tentativas de login (protótipo hospedado)
+def test_muitas_senhas_erradas_bloqueiam_por_alguns_minutos(client, banco, monkeypatch):
+    monkeypatch.setattr(config, "LOGIN_MAX_ERROS", 3)
+    criar_usuario(banco)
+    for _ in range(3):
+        assert entrar(client, senha="errada").status_code == 401
+    bloqueado = entrar(client)  # nem a senha certa entra durante o bloqueio
+    assert bloqueado.status_code == 429
+    assert "Tente de novo em" in bloqueado.json()["detail"]
+
+
+def test_login_certo_zera_os_erros(client, banco, monkeypatch):
+    monkeypatch.setattr(config, "LOGIN_MAX_ERROS", 3)
+    criar_usuario(banco)
+    for _ in range(2):
+        entrar(client, senha="errada")
+    assert entrar(client).status_code == 200
+    for _ in range(2):
+        entrar(client, senha="errada")
+    assert entrar(client).status_code == 200  # não acumulou com os erros de antes
+
+
+def test_bloqueio_passa_depois_do_tempo(client, banco, monkeypatch):
+    monkeypatch.setattr(config, "LOGIN_MAX_ERROS", 2)
+    criar_usuario(banco)
+    agora = [1000.0]
+    monkeypatch.setattr(auth.time, "monotonic", lambda: agora[0])
+    entrar(client, senha="errada")
+    entrar(client, senha="errada")
+    assert entrar(client).status_code == 429
+    agora[0] += config.LOGIN_BLOQUEIO_MIN * 60 + 1
+    assert entrar(client).status_code == 200
+
+
+# ---------------------------------------------------------------- produção
+@pytest.mark.parametrize("chave, senha, exigir, ok", [
+    ("x" * 40, "senha-do-prototipo", True, True),
+    (config._CHAVE_PADRAO, "senha-do-prototipo", True, False),   # chave pública do repositório
+    ("curta", "senha-do-prototipo", True, False),
+    ("x" * 40, "gestar123", True, False),                         # senha do README
+    ("x" * 40, "senha-do-prototipo", False, False),               # login desligado
+])
+def test_producao_recusa_configuracao_insegura(monkeypatch, chave, senha, exigir, ok):
+    monkeypatch.setattr(config, "PRODUCAO", True)
+    monkeypatch.setattr(config, "SECRET_KEY", chave)
+    monkeypatch.setattr(config, "SENHA_DEMO", senha)
+    monkeypatch.setattr(config, "EXIGIR_LOGIN", exigir)
+    if ok:
+        config.checar_producao()
+    else:
+        with pytest.raises(RuntimeError):
+            config.checar_producao()
+
+
+def test_desenvolvimento_aceita_os_padroes(monkeypatch):
+    monkeypatch.setattr(config, "PRODUCAO", False)
+    config.checar_producao()  # não levanta
+
+
+def test_ip_inventado_a_esquerda_nao_escapa_do_bloqueio(client, banco, monkeypatch):
+    monkeypatch.setattr(config, "LOGIN_MAX_ERROS", 2)
+    criar_usuario(banco)
+    for falso in ("1.1.1.1", "2.2.2.2"):
+        client.post("/api/auth/login", data={"username": "enf", "password": "x"},
+                    headers={"X-Forwarded-For": f"{falso}, 200.1.1.1"})
+    r = client.post("/api/auth/login", data={"username": "enf", "password": SENHA},
+                    headers={"X-Forwarded-For": "3.3.3.3, 200.1.1.1"})
+    assert r.status_code == 429  # o IP acrescentado pelo proxy (200.1.1.1) é o mesmo
+    outro = client.post("/api/auth/login", data={"username": "enf", "password": SENHA},
+                        headers={"X-Forwarded-For": "200.9.9.9"})
+    assert outro.status_code == 200  # outra pessoa não é afetada

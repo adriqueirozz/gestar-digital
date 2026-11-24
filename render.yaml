@@ -1,0 +1,17 @@
+# Receita do protótipo no Render (render.com → New → Blueprint → escolher este repositório).
+# Plano gratuito: o servidor "dorme" depois de 15 min sem acesso e leva até ~1 min para acordar.
+# O disco é apagado a cada reinício: os dados voltam sempre ao estado de demonstração.
+services:
+  - type: web
+    name: gestar-digital
+    runtime: docker
+    plan: free
+    region: virginia            # a região disponível mais próxima do Brasil
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    autoDeployTrigger: commit   # cada merge na main atualiza o protótipo sozinho
+    envVars:
+      - key: GESTAR_SECRET_KEY
+        generateValue: true     # o Render gera uma chave aleatória; ninguém precisa digitar
+      - key: GESTAR_SENHA_DEMO
+        sync: false             # o Render pede esta senha na criação (não fica no repositório)

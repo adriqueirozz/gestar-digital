@@ -8,6 +8,8 @@ import base64
 import hashlib
 import hmac
 import os
+import threading
+import time
 from datetime import timedelta
 
 import jwt
@@ -80,6 +82,45 @@ def usuario_do_token(db: Session, token: str) -> models.Usuario:
     if usuario is None or not usuario.ativo:
         raise _nao_autenticado("Usuário inativo ou inexistente.")
     return usuario
+
+
+# ---------------------------------------------------------------- tentativas de login
+# Guarda, por IP, os horários dos erros de senha recentes (em memória: zera quando o servidor reinicia).
+_erros_login: dict[str, list[float]] = {}
+_trava_erros = threading.Lock()
+
+
+def _janela() -> float:
+    return config.LOGIN_BLOQUEIO_MIN * 60
+
+
+def minutos_de_bloqueio(chave: str) -> int:
+    """Quantos minutos faltam para liberar o login desta origem (0 = liberado)."""
+    agora = time.monotonic()
+    with _trava_erros:
+        recentes = [t for t in _erros_login.get(chave, []) if agora - t < _janela()]
+        if recentes:
+            _erros_login[chave] = recentes
+        else:
+            _erros_login.pop(chave, None)
+        if len(recentes) < config.LOGIN_MAX_ERROS:
+            return 0
+        return max(1, int((recentes[0] + _janela() - agora) // 60) + 1)
+
+
+def registrar_erro_login(chave: str) -> None:
+    with _trava_erros:
+        if len(_erros_login) > 10_000:  # não deixa a memória crescer sem limite
+            _erros_login.clear()
+        _erros_login.setdefault(chave, []).append(time.monotonic())
+
+
+def limpar_erros_login(chave: str | None = None) -> None:
+    with _trava_erros:
+        if chave is None:
+            _erros_login.clear()
+        else:
+            _erros_login.pop(chave, None)
 
 
 # ---------------------------------------------------------------- dependências das rotas

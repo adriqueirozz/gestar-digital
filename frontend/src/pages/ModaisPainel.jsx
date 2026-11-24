@@ -15,10 +15,12 @@ const FUSO = "America/Recife";
 const NOME_PERFIL = { gestante: "Gestante", puerpera: "Puérpera", abortamento: "Abortamento" };
 const TOM_PERFIL = { gestante: "rosa", puerpera: "roxo", abortamento: "aviso" };
 const MOTIVO = { alocacao: "Alocada", movimentacao: "Movida", saida: "Saída" };
-const DESFECHO = { casa: "Alta para casa", alojamento: "Alojamento conjunto", transferencia: "Transferência" };
-const TIPO_PARTO = { normal: "normal", cesarea: "cesárea", forceps: "fórceps" };
+const DESFECHO = { casa: "Alta", alojamento: "Alojamento conjunto", transferencia: "Transferência" };
+// "normal" é o código interno do parto vaginal
+const TIPO_PARTO = { normal: "parto vaginal", cesarea: "cesárea" };
+const NASCIMENTO = { vivo: "nascido vivo", natimorto: "natimorto" };
 const MARCAS = [
-  ["parindo", "Parindo"], ["comorbidade", "Comorbidade"], ["atb", "ATB"],
+  ["parindo", "Em trabalho de parto"], ["comorbidade", "Comorbidade"], ["atb", "ATB"],
   ["reserva_sanguinea", "Reserva sanguínea"], ["tarh", "TARH"],
 ];
 
@@ -143,7 +145,7 @@ export function ModalPaciente({ id, onFechar, onMudou, onAlocar }) {
               <div className="campos-linha">
                 <Campo rotulo="Tipo de parto">
                   <select value={parto.tipo} onChange={(e) => setParto({ ...parto, tipo: e.target.value })}>
-                    <option value="normal">Normal</option><option value="cesarea">Cesárea</option><option value="forceps">Fórceps</option>
+                    <option value="normal">Parto vaginal</option><option value="cesarea">Cesárea</option>
                   </select>
                 </Campo>
                 <Campo rotulo="Nascimento">
@@ -191,7 +193,7 @@ export function ModalPaciente({ id, onFechar, onMudou, onAlocar }) {
             {p.parto && (
               <div>
                 <dt>Pós-parto</dt>
-                <dd>{p.parto.horas}h · {TIPO_PARTO[p.parto.tipo] || p.parto.tipo}, {p.parto.nascimento}
+                <dd>{p.parto.horas}h · {TIPO_PARTO[p.parto.tipo] || p.parto.tipo}, {NASCIMENTO[p.parto.nascimento] || p.parto.nascimento}
                   {p.parto.registrado_por && <small>registrado por {p.parto.registrado_por}</small>}</dd>
               </div>
             )}

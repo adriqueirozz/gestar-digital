@@ -8,9 +8,11 @@ from app import models
 
 FUSO_LOCAL_EM_HORAS = 3  # Pernambuco é UTC-3; o banco guarda UTC
 PERFIS = {"gestante", "puerpera", "abortamento"}
-TIPOS_PARTO = {"normal", "cesarea", "forceps"}
+TIPOS_PARTO = {"normal", "cesarea"}  # "normal" aparece na tela como "parto vaginal"; fórceps não é registrado
 NASCIMENTOS = {"vivo", "natimorto"}
 DESFECHOS = {"casa", "alojamento", "transferencia"}
+# Como cada desfecho aparece para a equipe ("casa" é o código interno da alta)
+NOME_DESFECHO = {"casa": "Alta", "alojamento": "Alojamento conjunto", "transferencia": "Transferência"}
 
 
 class RegraErro(HTTPException):
@@ -132,7 +134,7 @@ def registrar_saida(db: Session, paciente, desfecho: str, data_hora=None, usuari
         destino_id=None,
         motivo="saida",
         data_hora=quando,
-        observacao=f"Desfecho: {desfecho}",
+        observacao=f"Desfecho: {NOME_DESFECHO[desfecho]}",
         usuario_id=usuario_id,
     ))
     paciente.status = "saiu"

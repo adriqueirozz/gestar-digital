@@ -20,13 +20,13 @@ class AlocacaoIn(BaseModel):
 
 
 class PartoIn(BaseModel):
-    tipo: str                         # normal | cesarea | forceps
+    tipo: str                         # normal (parto vaginal) | cesarea
     nascimento: str                   # vivo | natimorto
     data_hora: str | None = None
 
 
 class SaidaIn(BaseModel):
-    desfecho: str                     # casa | alojamento | transferencia
+    desfecho: str                     # casa (alta) | alojamento | transferencia
     data_hora: str | None = None
 
 

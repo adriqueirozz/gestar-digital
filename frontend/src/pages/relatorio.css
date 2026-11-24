@@ -1,19 +1,18 @@
 
-.relatorio {
-  margin: -16px;
-  padding: 20px 22px;
-  min-height: calc(100vh - 100px);
-  background: #f1f1f1;
-}
+/* ---- página de relatório ---- */
 
 .relatorio {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  color: #292929;
+  gap: 16px;
+  margin: -16px;
+  padding: 20px 22px;
+  min-height: calc(100vh - 100px);
+  background: var(--cor-fundo);
+  color: var(--cor-texto);
 }
 
-/* Cabeçalho */
+/* ---- cabeçalho ---- */
 
 .relatorio-topo {
   display: flex;
@@ -28,16 +27,17 @@
   margin: 0 0 8px;
   font-size: 20px;
   font-weight: 700;
+  color: var(--cor-texto);
 }
 
 .relatorio-topo p {
   margin: 0;
   font-size: 13px;
-  color: #777;
+  color: var(--cor-texto-suave);
   line-height: 1.5;
 }
 
-/* Filtros e botões */
+/* ---- filtros e botões ---- */
 
 .relatorio-acoes {
   display: flex;
@@ -54,46 +54,54 @@
 
 .relatorio-seletor span {
   font-size: 12px;
-  color: #777;
+  font-weight: 600;
+  color: var(--cor-texto-suave);
 }
 
 .relatorio-seletor input {
   height: 37px;
   min-width: 160px;
   padding: 0 10px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  background: #fff;
-  color: #292929;
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-p);
+  background: var(--cor-superficie);
+  color: var(--cor-texto);
   font: inherit;
   font-size: 13px;
+}
+
+.relatorio-seletor input:focus {
+  outline: 2px solid var(--cor-principal-clara);
+  border-color: var(--cor-principal);
 }
 
 .relatorio-botao {
   min-height: 37px;
   padding: 0 15px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  background: #fff;
-  color: #292929;
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-p);
+  background: var(--cor-superficie);
+  color: var(--cor-principal-texto);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: background .15s;
+  transition: background .15s, border-color .15s;
 }
 
 .relatorio-botao:hover:not(:disabled) {
-  background: #f1f1f1;
+  background: var(--cor-principal-clara);
+  border-color: var(--cor-principal);
 }
 
 .relatorio-botao-escuro {
-  background: #292929;
-  border-color: #292929;
+  background: var(--cor-principal);
+  border-color: var(--cor-principal);
   color: #fff;
 }
 
 .relatorio-botao-escuro:hover:not(:disabled) {
-  background: #444;
+  background: var(--cor-principal-escura);
+  border-color: var(--cor-principal-escura);
 }
 
 .relatorio-botao:disabled {
@@ -101,27 +109,33 @@
   cursor: not-allowed;
 }
 
-/* Cards dos indicadores */
+/* ---- cards dos indicadores ---- */
 
 .relatorio-grade {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
+  gap: 14px;
 }
 
 .relatorio-card {
   min-height: 88px;
   padding: 15px;
-  background: #fff;
-  border: 1px solid #ccc;
-  border-radius: 8px;
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-g);
+  transition: border-color .15s, box-shadow .15s;
+}
+
+.relatorio-card:hover {
+  border-color: #d9b5c6;
+  box-shadow: 0 2px 8px rgba(90, 35, 60, .04);
 }
 
 .relatorio-card h2 {
-  margin: 0 0 9px;
+  margin: 0 0 10px;
   font-size: 13px;
   font-weight: 700;
-  color: #292929;
+  color: var(--cor-texto-suave);
 }
 
 .relatorio-indicadores {
@@ -134,77 +148,91 @@
 .relatorio-indicador {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
   min-width: 0;
 }
 
 .relatorio-indicador strong {
-  font-size: 22px;
+  font-size: 25px;
   line-height: 1.15;
   font-weight: 700;
+  color: black;
   white-space: nowrap;
 }
 
 .relatorio-indicador span {
   font-size: 12px;
-  color: #888;
+  color: black;
 }
 
-/* Prévia CSV */
+/* ---- prévia CSV ---- */
 
 .relatorio-csv {
   min-height: 165px;
-  padding: 15px;
-  background: #fff;
-  border: 1px solid #ccc;
-  border-radius: 8px;
+  padding: 16px;
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-g);
 }
 
 .relatorio-csv h2 {
-  margin: 0 0 7px;
-  font-size: 13px;
+  margin: 0 0 12px;
+  font-size: 14px;
   font-weight: 700;
+  color: var(--cor-texto);
 }
 
 .relatorio-csv-conteudo {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 5px;
   overflow-wrap: anywhere;
+  padding: 12px;
+  background: #fbf7f9;
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-p);
 }
 
 .relatorio-csv-linha {
+  font-family: monospace;
   font-size: 12px;
-  color: #888;
-  line-height: 1.3;
+  color: var(--cor-texto-suave);
+  line-height: 1.5;
 }
+
+.relatorio-csv-linha:first-child {
+  color: var(--cor-principal);
+  font-weight: 700;
+}
+
+/* ---- rodapé ---- */
 
 .relatorio-rodape {
   margin: 0;
   font-size: 12px;
-  color: #777;
+  color: var(--cor-texto-suave);
   text-align: right;
 }
 
-/* Estados */
+/* ---- estados ---- */
 
 .relatorio-estado {
   padding: 40px 15px;
   text-align: center;
-  color: #777;
+  color: var(--cor-texto-suave);
   font-size: 14px;
 }
 
 .relatorio-erro {
   padding: 12px 15px;
-  background: #fbe9e7;
-  color: #8f1d16;
+  background: var(--alerta-bg);
+  color: var(--alerta-tx);
   border: 1px solid #e7c2be;
-  border-radius: 7px;
+  border-radius: var(--raio-m);
   font-size: 14px;
 }
 
-/* Responsividade */
+/* ---- responsividade ---- */
 
 @media (max-width: 900px) {
   .relatorio-grade {
@@ -217,6 +245,10 @@
 }
 
 @media (max-width: 600px) {
+  .relatorio {
+    padding: 16px;
+  }
+
   .relatorio-grade {
     grid-template-columns: 1fr;
   }

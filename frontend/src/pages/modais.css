@@ -1,20 +1,72 @@
 .modal-corpo { display: flex; flex-direction: column; gap: 14px; }
-.secao-titulo { margin: 0; font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--cor-texto-suave); }
-.dados { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 8px 16px; font-size: 14px; }
-.dados small { display: block; font-size: 12px; color: var(--cor-texto-suave); }
+.modal-corpo .modal-corpo { padding: 0; }   /* o Modal já tem o recuo; sem isso o conteúdo ficava com recuo dobrado */
+.secao-titulo { margin: 0 0 8px; font-size: 13px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--cor-texto-suave); }
 .linha-acoes { display: flex; flex-wrap: wrap; gap: 8px; }
 .grade-chips { display: flex; flex-wrap: wrap; gap: 8px; }
-.campo { display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 600; }
+.campo { display: flex; flex-direction: column; gap: 4px; font-size: 14px; font-weight: 600; }
 .campo input, .campo select, .campo textarea {
   min-height: 44px; padding: 0 12px; border: 1px solid #d9c3cd; border-radius: var(--raio-p);
-  font: inherit; font-size: 15px; font-weight: 400; background: #fff;
+  font: inherit; font-size: 16px; font-weight: 400; background: #fff;
 }
 .campos-linha { display: flex; flex-wrap: wrap; gap: 12px; }
 .campos-linha .campo { flex: 1 1 160px; }
 .marcas { display: flex; flex-wrap: wrap; gap: 8px 16px; }
-.marcas label { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; min-height: 32px; }
+.marcas label { display: inline-flex; align-items: center; gap: 6px; font-size: 15px; min-height: 32px; }
 .caixa { border: 1px solid var(--cor-borda); border-radius: var(--raio-m); padding: 12px; background: #fffafc; display: flex; flex-direction: column; gap: 10px; }
-.erro { margin: 0; color: var(--alerta-tx); background: var(--alerta-bg); padding: 8px 12px; border-radius: var(--raio-p); font-size: 14px; }
-.historico { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+.erro { margin: 0; color: var(--alerta-tx); background: var(--alerta-bg); padding: 8px 12px; border-radius: var(--raio-p); font-size: 15px; }
+.link { background: none; border: 0; padding: 0; text-align: left; font-family: inherit; color: inherit; cursor: pointer; }
+.link:hover { text-decoration: underline; }
+.link-acao { color: var(--cor-principal); font-size: inherit; font-weight: 600; }
+
+/* ---- ficha da paciente ---- */
+.ficha-sub { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+.dados { margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px 16px; font-size: 15px; }
+.dados dt { font-size: 13px; color: var(--cor-texto-suave); }
+.dados dd { margin: 2px 0 0; }
+.dados small { display: block; font-size: 13px; color: var(--cor-texto-suave); }
+.dados-largo { grid-column: 1 / -1; }
+.ficha-secao { padding-top: 14px; border-top: 1px solid var(--cor-borda); display: flex; flex-direction: column; gap: 10px; }
+.ficha-secao .secao-titulo { margin: 0; }
+.ficha-historico { padding-top: 14px; border-top: 1px solid var(--cor-borda); font-size: 15px; }
+.ficha-historico summary { cursor: pointer; font-weight: 600; color: var(--cor-texto-suave); min-height: 28px; }
+.ficha-historico .historico { margin-top: 8px; }
+.historico { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; font-size: 14px; }
 .historico li { padding: 6px 0; border-top: 1px solid var(--cor-borda); }
 .historico small { color: var(--cor-texto-suave); }
+
+/* horário "agora" com opção de alterar, e observação opcional */
+.horario { margin: 0; font-size: 15px; color: var(--cor-texto-suave); }
+.horario b { color: var(--cor-texto); font-weight: 600; }
+.detalhes-registro { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 20px; font-size: 15px; }
+.detalhes-registro .campo { flex: 1 1 220px; }
+
+/* ---- alocar: leitos livres agrupados por enfermaria ---- */
+.grade-enfermarias { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px 16px; }
+.destino-enf { display: flex; align-items: center; gap: 6px; }
+.destino-enf > span { min-width: 48px; font-size: 14px; font-weight: 600; color: var(--cor-texto-suave); }
+.destino-enf .chip { min-width: 44px; justify-content: center; }
+
+/* ---- pendências (ficha e passagem de plantão) ---- */
+.pend-lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.pend-item {
+  display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px 12px;
+  padding: 8px 10px; border: 1px solid var(--cor-borda); border-left: 4px solid var(--ok-tx);
+  border-radius: var(--raio-p); background: var(--cor-superficie);
+}
+.pend-item.proxima { border-left-color: #d9a432; }
+.pend-item.vencida { border-color: #e7c2be; border-left-color: #c0392b; background: var(--alerta-bg); }
+.pend-item.concluida { border-left-color: #b8aab1; background: transparent; }
+.pend-item.concluida .pend-texto { text-decoration: line-through; color: var(--cor-texto-suave); }
+.pend-texto { font-size: 15px; font-weight: 500; }
+.pend-texto small { display: block; font-size: 13px; font-weight: 400; color: var(--cor-texto-suave); }
+.pend-item.concluida .pend-texto small { text-decoration: none; }
+.pend-acoes { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+.pend-prazo { font-size: 14px; font-weight: 600; color: var(--cor-texto-suave); white-space: nowrap; }
+.pend-prazo.proxima { color: var(--aviso-tx); }
+.pend-prazo.vencida { color: var(--alerta-tx); }
+.pend-nova { display: flex; flex-wrap: wrap; gap: 8px; }
+.pend-nova input, .pend-nova select {
+  min-height: 44px; padding: 0 12px; border: 1px solid #d9c3cd; border-radius: var(--raio-p);
+  font: inherit; font-size: 16px; background: #fff;
+}
+.pend-nova input { flex: 1 1 220px; }

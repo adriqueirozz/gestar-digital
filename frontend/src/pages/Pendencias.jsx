@@ -1,21 +1,17 @@
 import { useEffect, useState } from "react";
 import { concluirPendencia, criarPendencia, getPlantao } from "../api.js";
 import { usePodeEditar } from "../auth/useSessao.js";
+import Alertas from "../components/Alertas.jsx";
+import ItemPendencia from "../components/ItemPendencia.jsx";
 import Botao from "../components/ui/Botao.jsx";
-import Card from "../components/ui/Card.jsx";
 import Chip from "../components/ui/Chip.jsx";
 import Modal from "../components/ui/Modal.jsx";
-import Tag from "../components/ui/Tag.jsx";
-import { fmtRestante, rotuloStatus, tomStatus } from "./pendenciasUtil.js";
+import { fmtDataHora } from "./pendenciasUtil.js";
 import "./modais.css";
 import "./pendencias.css";
 
-const TOM_PERFIL = { gestante: "rosa", puerpera: "roxo", abortamento: "aviso" };
 const NOME_PERFIL = { gestante: "Gestante", puerpera: "Puérpera", abortamento: "Abortamento" };
-const FILTROS = [["todas", "Todas as pacientes"], ["com", "Só com pendência"], ["vencidas", "Só vencidas"]];
-
-const hora = (iso) =>
-  new Date(iso).toLocaleString("pt-BR", { timeZone: "America/Recife", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+const plural = (n, um, varios) => `${n} ${n === 1 ? um : varios}`;
 
 function ModalPendencia({ paciente, onFechar, onSalvo }) {
   const [descricao, setDescricao] = useState("");
@@ -23,22 +19,23 @@ function ModalPendencia({ paciente, onFechar, onSalvo }) {
   const [erro, setErro] = useState("");
   const [salvando, setSalvando] = useState(false);
 
-  async function salvar() {
+  async function salvar(e) {
+    e.preventDefault();
     setSalvando(true);
     setErro("");
     try {
       await criarPendencia({ paciente_id: paciente.id, descricao, prazo_horas: prazo });
       onSalvo();
       onFechar();
-    } catch (e) {
-      setErro(e.message);
+    } catch (falha) {
+      setErro(falha.message);
       setSalvando(false);
     }
   }
 
   return (
     <Modal aberto titulo="Nova pendência" subtitulo={paciente.nome} onFechar={onFechar} largura={520}>
-      <div className="modal-corpo">
+      <form className="modal-corpo" onSubmit={salvar}>
         {erro && <p className="erro" role="alert">{erro}</p>}
         <label className="campo">
           O que precisa ser feito?
@@ -52,10 +49,10 @@ function ModalPendencia({ paciente, onFechar, onSalvo }) {
           </div>
         </div>
         <div className="linha-acoes">
-          <Botao variante="primario" disabled={!descricao.trim() || salvando} onClick={salvar}>Criar pendência</Botao>
+          <Botao type="submit" variante="primario" disabled={!descricao.trim() || salvando}>Criar pendência</Botao>
           <Botao onClick={onFechar}>Cancelar</Botao>
         </div>
-      </div>
+      </form>
     </Modal>
   );
 }
@@ -80,15 +77,18 @@ export default function Pendencias() {
     }
   }
 
-  if (!dados) return <p>{erro || "Carregando..."}</p>;
+  if (!dados) return <p className="tela-carregando">{erro || "Carregando…"}</p>;
 
   const { resumo, itens } = dados;
-  const visiveis = itens.filter(
-    (i) =>
-      filtro === "todas" ||
-      (filtro === "com" && i.pendencias.some((p) => p.status !== "concluida")) ||
-      (filtro === "vencidas" && i.pendencias.some((p) => p.status === "vencida"))
-  );
+  const abertas = (i) => i.pendencias.some((p) => p.status !== "concluida");
+  const vencidas = (i) => i.pendencias.some((p) => p.status === "vencida");
+  // os filtros já mostram quantas pacientes há em cada um
+  const FILTROS = [
+    ["todas", "Todas as pacientes", itens.length],
+    ["com", "Com pendência", itens.filter(abertas).length],
+    ["vencidas", "Com vencida", itens.filter(vencidas).length],
+  ];
+  const visiveis = itens.filter((i) => filtro === "todas" || (filtro === "com" && abertas(i)) || (filtro === "vencidas" && vencidas(i)));
 
   // agrupa por local mantendo a ordem que veio da API
   const grupos = [];
@@ -101,23 +101,26 @@ export default function Pendencias() {
   return (
     <div className="plantao">
       <div className="plantao-topo">
-        <h1>Passagem de plantão</h1>
+        <div>
+          <h1>Passagem de plantão</h1>
+          {/* resumo numa linha só: o que exige atenção vem primeiro e colorido */}
+          <p className="plantao-resumo">
+            <span className={resumo.vencidas ? "resumo-vencida" : undefined}>{plural(resumo.vencidas, "vencida", "vencidas")}</span>
+            {" · "}
+            <span className={resumo.proximas ? "resumo-proxima" : undefined}>{plural(resumo.proximas, "vencendo em breve", "vencendo em breve")}</span>
+            {" · "}{resumo.em_dia} em dia · {plural(resumo.concluidas, "concluída", "concluídas")} nas últimas 12h
+          </p>
+        </div>
         <div className="no-print"><Botao onClick={() => window.print()}>Imprimir</Botao></div>
       </div>
-      <p className="so-impressao">Gerado em {hora(dados.gerado_em)} · Gestar Digital · COB HC-UFPE</p>
+      <p className="so-impressao">Gerado em {fmtDataHora(dados.gerado_em)} · Gestar Digital · COB HC-UFPE</p>
       {erro && <p className="erro" role="alert">{erro}</p>}
 
-      <div className="resumo-plantao">
-        <Card><div className="kpi"><div className="kpi-rotulo">Vencidas</div><div className="kpi-valor">{resumo.vencidas}</div></div></Card>
-        <Card><div className="kpi"><div className="kpi-rotulo">Próximas do vencimento</div><div className="kpi-valor">{resumo.proximas}</div></div></Card>
-        <Card><div className="kpi"><div className="kpi-rotulo">Em dia</div><div className="kpi-valor">{resumo.em_dia}</div></div></Card>
-        <Card><div className="kpi"><div className="kpi-rotulo">Concluídas (12h)</div><div className="kpi-valor">{resumo.concluidas}</div></div></Card>
-      </div>
-
-      <div className="filtros no-print">
-        <span className="rotulo">Mostrar</span>
-        {FILTROS.map(([valor, rotulo]) => (
-          <Chip key={valor} selecionado={filtro === valor} onClick={() => setFiltro(valor)}>{rotulo}</Chip>
+      <div className="filtros no-print" role="group" aria-label="Mostrar">
+        {FILTROS.map(([valor, rotulo, n]) => (
+          <Chip key={valor} pequeno selecionado={filtro === valor} onClick={() => setFiltro(valor)}>
+            {rotulo} <span className="chip-num">{n}</span>
+          </Chip>
         ))}
       </div>
 
@@ -126,48 +129,32 @@ export default function Pendencias() {
         <section className="grupo-plantao" key={g.nome}>
           <h2>{g.nome}</h2>
           {g.itens.map((i) => (
-            <div className="pac-plantao" key={i.id}>
+            <article className="pac-plantao" key={i.id}>
               <div className="pac-topo">
-                <div>
-                  <div className="pac-nome">{i.nome} <span className="pac-meta">· {i.local}</span></div>
-                  <div className="pac-meta">{i.gpa} · IG {i.ig}{i.diagnostico ? ` · ${i.diagnostico}` : ""}</div>
+                <div className="pac-id">
+                  <div className="pac-nome">{i.nome} <span className="pac-local">{i.local}</span></div>
+                  <div className="pac-meta">
+                    {NOME_PERFIL[i.perfil] || i.perfil} · {i.gpa} · IG {i.ig}{i.diagnostico ? ` · ${i.diagnostico}` : ""}
+                  </div>
+                  <Alertas tags={i.tags} />
                 </div>
-                <span className="tags">
-                  <Tag tom={TOM_PERFIL[i.perfil] || "neutro"}>{NOME_PERFIL[i.perfil] || i.perfil}</Tag>
-                  {i.tags.map((t) => <Tag key={t.txt} tom={t.tom}>{t.txt}</Tag>)}
-                </span>
+                {podeEditar && (
+                  <span className="no-print">
+                    <Botao pequeno onClick={() => setNova({ id: i.id, nome: i.nome })}>+ Pendência</Botao>
+                  </span>
+                )}
               </div>
 
-              {i.pendencias.length === 0 ? (
-                <div className="sem-pend">Sem pendências.</div>
-              ) : (
+              {i.pendencias.length > 0 ? (
                 <ul className="pend-lista">
                   {i.pendencias.map((p) => (
-                    <li key={p.id} className={`pend-item ${p.status}`}>
-                      <span className="pend-texto">
-                        {p.descricao}
-                        <small>
-                          {p.status === "concluida"
-                            ? `concluída às ${hora(p.concluida_em)}${p.concluida_por ? ` por ${p.concluida_por}` : ""}`
-                            : `${fmtRestante(p.restante_min)} · prazo ${p.prazo_horas}h${p.criada_por ? ` · criada por ${p.criada_por}` : ""}`}
-                        </small>
-                      </span>
-                      <span className="pend-acoes">
-                        <Tag tom={tomStatus[p.status]}>{rotuloStatus[p.status]}</Tag>
-                        {podeEditar && p.status !== "concluida" && (
-                          <span className="no-print"><Botao onClick={() => concluir(p.id)}>Concluir</Botao></span>
-                        )}
-                      </span>
-                    </li>
+                    <ItemPendencia key={p.id} pendencia={p} podeEditar={podeEditar} onConcluir={() => concluir(p.id)} />
                   ))}
                 </ul>
+              ) : (
+                <p className="sem-pend so-impressao">Sem pendências.</p>
               )}
-              {podeEditar && (
-                <div className="no-print">
-                  <Botao onClick={() => setNova({ id: i.id, nome: i.nome })}>+ Pendência</Botao>
-                </div>
-              )}
-            </div>
+            </article>
           ))}
         </section>
       ))}

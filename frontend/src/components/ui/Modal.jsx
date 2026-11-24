@@ -1,5 +1,4 @@
 import { useEffect } from "react";
-import Botao from "./Botao.jsx";
 
 export default function Modal({ aberto, titulo, subtitulo, onFechar, largura = 620, children }) {
   useEffect(() => {
@@ -26,7 +25,7 @@ export default function Modal({ aberto, titulo, subtitulo, onFechar, largura = 6
             <h2 className="modal-titulo">{titulo}</h2>
             {subtitulo && <div className="modal-sub">{subtitulo}</div>}
           </div>
-          <Botao pequeno onClick={onFechar}>Fechar</Botao>
+          <button type="button" className="modal-fechar" onClick={onFechar} aria-label="Fechar" title="Fechar">×</button>
         </div>
         <div className="modal-corpo">{children}</div>
       </div>

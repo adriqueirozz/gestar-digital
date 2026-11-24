@@ -16,3 +16,10 @@ function duracao(min) {
 export function fmtRestante(min) {
   return min < 0 ? `vencida há ${duracao(-min)}` : `vence em ${duracao(min)}`;
 }
+export const fmtDataHora = (iso) =>
+  iso
+    ? new Date(iso).toLocaleString("pt-BR", { timeZone: "America/Recife", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })
+    : "—";
+
+// "vence em 2h00" -> "Vence em 2h00"
+export const maiuscula = (texto) => (texto ? texto[0].toUpperCase() + texto.slice(1) : texto);

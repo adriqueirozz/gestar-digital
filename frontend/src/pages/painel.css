@@ -2,104 +2,172 @@
 .painel { display: flex; flex-direction: column; gap: 16px; }
 
 .painel-alerta {
-  display: flex; flex-wrap: wrap; gap: 8px 16px; justify-content: space-between;
-  padding: 12px 16px; border-radius: var(--raio-m);
-  background: var(--alerta-bg); color: var(--alerta-tx); font-size: 14px; font-weight: 500;
-  border: 1px solid #e7c2be;
+  padding: 10px 14px; border-radius: var(--raio-m); border: 1px solid #e7c2be;
+  background: var(--alerta-bg); color: var(--alerta-tx); font-size: 15px;
 }
 
-/* indicadores */
-.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; }
-.kpi { display: flex; flex-direction: column; gap: 8px; }
-.kpi-rotulo { font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--cor-texto-suave); }
-.kpi-valor { display: flex; align-items: baseline; gap: 8px; font-size: 34px; font-weight: 700; line-height: 1; }
-.kpi-valor small { font-size: 15px; font-weight: 600; color: var(--cor-texto-suave); }
-.kpi-valor.menor { font-size: 22px; line-height: 1.25; display: block; }
-.kpi-nota { font-size: 12px; color: var(--cor-texto-suave); }
-.kpi-alerta .card { border-color: #e7c2be; box-shadow: 0 0 0 2px var(--alerta-bg); }
-.barra { height: 8px; border-radius: 99px; background: #f1e3ea; overflow: hidden; }
-.barra > div { height: 100%; border-radius: 99px; background: var(--cor-principal); }
-.kpi-alerta .barra > div { background: #c0392b; }
+/* ---- resumo: 4 números numa faixa só, sem textos de apoio (os detalhes ficam no "title") ---- */
+.resumo { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.indicador {
+  height: 100%; display: flex; flex-direction: column; gap: 6px; padding: 12px 16px;
+  background: var(--cor-superficie); border: 1px solid var(--cor-borda); border-radius: var(--raio-g);
+}
+.indicador-rotulo { font-size: 14px; font-weight: 600; color: var(--cor-texto-suave); }
+.indicador-valor { display: flex; align-items: baseline; gap: 8px; font-size: 26px; font-weight: 700; line-height: 1.1; }
+.indicador-valor small { font-size: 14px; font-weight: 600; color: var(--cor-texto-suave); }
+.indicador.destaque { border-color: #e7c2be; background: #fffafa; }
+.indicador.destaque .indicador-valor { color: var(--alerta-tx); }
+.indicador.destaque .barra > div { background: #c0392b; }
+.indicador-link { display: block; color: inherit; text-decoration: none; border-radius: var(--raio-g); }
+.indicador-link:hover .indicador { border-color: var(--cor-principal); }
 
-/* barra de filtros */
-.filtros { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
-.filtros .rotulo { font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--cor-texto-suave); margin-right: 4px; }
+/* ---- três colunas: fila | leitos | salas ---- */
+.painel-colunas { display: grid; grid-template-columns: minmax(280px, 340px) minmax(0, 1fr) minmax(220px, 280px); gap: 16px; align-items: start; }
+.titulo-linha { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.titulo-linha h2 { margin: 0; font-size: 17px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.contador {
+  min-width: 24px; padding: 1px 8px; border-radius: var(--raio-pilula); text-align: center;
+  background: var(--cor-principal-clara); color: var(--cor-principal-texto); font-size: 14px;
+}
+.nota { font-size: 13px; color: var(--cor-texto-suave); }
+.tags { display: flex; flex-wrap: wrap; gap: 4px; }
+.vazio { padding: 16px; text-align: center; color: var(--cor-texto-suave); font-size: 15px; list-style: none; }
+.link { background: none; border: 0; padding: 0; text-align: left; font-family: inherit; color: inherit; cursor: pointer; }
+.link:hover { text-decoration: underline; }
+.link-acao { color: var(--cor-principal); font-size: inherit; font-weight: 600; }
 
-/* três colunas: fila | enfermarias | salas e macas */
-.painel-colunas { display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start; }
-.col-fila { flex: 1 1 300px; min-width: 0; }
-.col-mapa { flex: 2 1 520px; min-width: 0; }
-.col-salas { flex: 1 1 290px; min-width: 0; display: flex; flex-direction: column; gap: 16px; }
-.pilha { display: flex; flex-direction: column; gap: 12px; }
+/* ---- fila de espera ---- */
+.fila-nota { margin: -4px 0 10px; }
+.fila { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+/* nome e botão Alocar na primeira linha; os detalhes usam a largura toda embaixo */
+.fila-item {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 2px 10px;
+  padding: 10px 12px; border: 1px solid var(--cor-borda); border-left: 4px solid #b8aab1;
+  border-radius: var(--raio-m); background: var(--cor-superficie);
+}
+.fila-item > .btn { grid-column: 2; grid-row: 1; min-height: 36px; padding: 0 14px; font-size: 14px; }
+.fila-item.prio-alta { border-left-color: #c0392b; }
+.fila-item.prio-media { border-left-color: #d9a432; }
+.fila-info { display: contents; }
+.fila-info > * { grid-column: 1 / -1; }
+.fila-info > .fila-nome { grid-column: 1; grid-row: 1; align-self: center; }
+.fila-nome { font-weight: 700; font-size: 16px; line-height: 1.25; }
+.fila-meta { font-size: 14px; color: var(--cor-texto-suave); }
+.fila-prio { font-weight: 600; color: var(--cor-texto); }
+.prio-alta .fila-prio { color: var(--alerta-tx); }
+.prio-media .fila-prio { color: var(--aviso-tx); }
+.fila-info .tags { margin-top: 4px; }
 
-.titulo-linha { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
-.titulo-linha h2 { margin: 0; font-size: 16px; font-weight: 700; }
-.nota { font-size: 12px; color: var(--cor-texto-suave); }
+/* ---- mapa de leitos ---- */
+.mapa-topo { align-items: center; }
+.mapa-filtros { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.amostra { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; }
+.amostra-livre { background: var(--leito-livre-bg); border: 1px dashed var(--leito-livre-borda); }
+.amostra-ocupado { background: #fff; border: 1px solid var(--leito-ocupado-borda); }
+.amostra-limpeza { background: var(--leito-limpeza-bg); border: 1px solid var(--leito-limpeza-borda); }
+.chip[aria-pressed="true"] .amostra { border-color: #fff; }
+.filtro-perfil {
+  min-height: 36px; padding: 0 10px; border: 1px solid #d9c3cd; border-radius: var(--raio-pilula);
+  background: var(--cor-superficie); color: var(--cor-texto); font: inherit; font-size: 14px; cursor: pointer;
+}
 
-/* legenda */
-.legenda { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; color: #4a3a42; }
-.legenda i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -2px; margin-right: 4px; }
-.lg-livre { background: var(--leito-livre-bg); border: 1px dashed var(--leito-livre-borda); }
-.lg-ocupado { background: #fff; border: 1px solid var(--leito-ocupado-borda); }
-.lg-limpeza { background: var(--leito-limpeza-bg); border: 1px solid var(--leito-limpeza-borda); }
-.lg-indisp { background: var(--leito-indisp-bg); border: 1px solid #aab4b1; }
-
-/* enfermarias e leitos */
-.enfs { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
-.enf { border: 1px solid var(--cor-borda); border-radius: var(--raio-m); padding: 10px; background: #fff9fb; display: flex; flex-direction: column; gap: 8px; }
-.enf-nome { font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--cor-texto-suave); }
+.enfs { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
+.enf { display: flex; flex-direction: column; gap: 6px; padding: 8px; border-radius: var(--raio-m); background: #fdf7fa; }
+.enf-nome { margin: 0 0 0 2px; font-size: 13px; font-weight: 700; color: var(--cor-texto-suave); }
 
 .leito {
-  display: flex; flex-direction: column; align-items: flex-start; gap: 4px; text-align: left;
-  width: 100%; box-sizing: border-box; padding: 10px; border-radius: var(--raio-p);
-  min-height: 56px; font: inherit; color: var(--cor-texto); transition: opacity .15s;
+  display: flex; align-items: center; gap: 8px; width: 100%; min-height: 40px; padding: 6px 8px;
+  border-radius: var(--raio-p); font: inherit; color: var(--cor-texto); text-align: left; cursor: pointer;
+  transition: opacity .15s;
 }
+.leito-letra {
+  flex: none; width: 24px; height: 24px; display: grid; place-items: center; border-radius: 6px;
+  background: rgba(42, 27, 34, .07); font-size: 13px; font-weight: 700; color: var(--cor-texto-suave);
+}
+.leito-estado { font-size: 14px; font-weight: 600; }
 .leito.livre { background: var(--leito-livre-bg); border: 1px dashed var(--leito-livre-borda); }
-.leito.ocupado { background: #fff; border: 1px solid var(--leito-ocupado-borda); min-height: 92px; }
+.leito.livre .leito-estado { color: var(--ok-tx); }
 .leito.limpeza { background: var(--leito-limpeza-bg); border: 1px solid var(--leito-limpeza-borda); }
+.leito.limpeza .leito-estado { color: var(--aviso-tx); }
 .leito.indisponivel {
   background: repeating-linear-gradient(45deg, #e3e7e6, #e3e7e6 6px, #d6dcda 6px, #d6dcda 12px);
   border: 1px solid #aab4b1;
 }
-.leito.apagado { opacity: .25; }
-.leito-rotulo { font-size: 12px; font-weight: 600; color: var(--cor-texto-suave); }
-.leito-estado { font-size: 14px; font-weight: 600; }
-.leito.livre .leito-estado { color: var(--ok-tx); }
-.leito.limpeza .leito-estado { color: var(--aviso-tx); }
 .leito.indisponivel .leito-estado { color: #4b5b60; }
-.leito-nome { font-size: 14px; font-weight: 700; line-height: 1.25; overflow-wrap: anywhere; }
-.tags { display: flex; flex-wrap: wrap; gap: 4px; }
+.leito.ocupado {
+  align-items: flex-start; min-height: 58px; background: #fff;
+  border: 1px solid var(--leito-ocupado-borda); border-left-width: 4px;
+}
+.leito.ocupado:hover { border-color: var(--cor-principal); }
+.leito.perfil-gestante { border-left-color: #d9579a; }
+.leito.perfil-puerpera { border-left-color: #7b5cc2; }
+.leito.perfil-abortamento { border-left-color: #d9a432; }
+.leito-corpo { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.leito-nome {
+  font-size: 15px; font-weight: 700; line-height: 1.25; overflow-wrap: anywhere;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.leito-detalhe { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.leito-detalhe .tags { display: contents; }   /* perfil e alertas fluem juntos na mesma linha */
+.leito-perfil { margin-right: 2px; }
+.leito-perfil { font-size: 13px; color: var(--cor-texto-suave); }
+.leito.apagado { opacity: .25; }
+.leito.sem-acao { cursor: default; }
 
-/* fila */
-.fila-item { border: 1px solid var(--cor-borda); border-radius: var(--raio-m); padding: 12px; display: flex; flex-direction: column; gap: 8px; background: #fffafc; }
-.fila-topo { display: flex; justify-content: space-between; gap: 8px; align-items: flex-start; }
-.fila-nome { font-weight: 700; font-size: 15px; line-height: 1.25; }
-.fila-meta { font-size: 13px; color: var(--cor-texto-suave); }
-.fila-espera { font-size: 13px; }
-.fila-espera span { color: var(--cor-texto-suave); }
-.vazio { padding: 16px; text-align: center; color: var(--cor-texto-suave); font-size: 14px; }
+/* ---- salas: ocupadas com o nome da paciente, livres resumidas ---- */
+.grupo-salas { padding: 10px 0; border-top: 1px solid var(--cor-borda); display: flex; flex-direction: column; gap: 6px; }
+.titulo-linha + .grupo-salas { border-top: 0; padding-top: 0; }
+.grupo-salas-topo { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.grupo-salas-topo h3 { margin: 0; font-size: 15px; font-weight: 600; }
+.grupo-salas-topo span { font-size: 13px; color: var(--cor-texto-suave); }
+.sala-ocupada {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 2px; width: 100%; padding: 8px 10px;
+  border: 1px solid #6a93c8; border-radius: var(--raio-p); background: var(--info-bg);
+  font: inherit; font-size: 13px; color: var(--info-tx); text-align: left; cursor: pointer;
+}
+.sala-ocupada b { font-size: 15px; color: var(--cor-texto); }
+.salas-livres { margin: 0; font-size: 14px; color: var(--ok-tx); }
 
-/* salas, apoio e macas */
-.sala { display: flex; justify-content: space-between; align-items: center; gap: 8px; min-height: 44px; padding: 0 12px; border-radius: var(--raio-p); font-size: 13px; }
-.sala .sala-nome { font-weight: 600; color: #4a3a42; }
-.sala.livre { background: var(--leito-livre-bg); border: 1px dashed var(--leito-livre-borda); }
-.sala.livre b { color: var(--ok-tx); }
-.sala.ocupada { background: var(--info-bg); border: 1px solid #6a93c8; }
-.maca { border: 1px solid #e7c2be; background: #fdf5f4; border-radius: var(--raio-m); padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; }
-.maca b { font-size: 14px; }
-.maca span { font-size: 13px; color: #4a3a42; }
-.maca small { font-size: 12px; color: var(--cor-texto-suave); }
-.subtitulo { margin: 4px 0 0; font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--cor-texto-suave); }
+/* ---- usados por outras telas (relatório e passagem de plantão) ---- */
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; }
+.kpi { display: flex; flex-direction: column; gap: 8px; }
+.kpi-rotulo { font-size: 13px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--cor-texto-suave); }
+.kpi-valor { display: flex; align-items: baseline; gap: 8px; font-size: 34px; font-weight: 700; line-height: 1; }
+.kpi-valor small { font-size: 16px; font-weight: 600; color: var(--cor-texto-suave); }
+.kpi-valor.menor { font-size: 22px; line-height: 1.25; display: block; }
+.kpi-nota { font-size: 13px; color: var(--cor-texto-suave); }
+.kpi-alerta .card { border-color: #e7c2be; box-shadow: 0 0 0 2px var(--alerta-bg); }
+.barra { height: 8px; border-radius: 99px; background: #f1e3ea; overflow: hidden; }
+.barra > div { height: 100%; border-radius: 99px; background: var(--cor-principal); }
+.kpi-alerta .barra > div { background: #c0392b; }
+.filtros { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.filtros .rotulo { font-size: 13px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--cor-texto-suave); margin-right: 4px; }
+.pilha { display: flex; flex-direction: column; gap: 12px; }
+.subtitulo { margin: 4px 0 0; font-size: 13px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--cor-texto-suave); }
 
-/* elementos clicáveis do painel */
-button.leito, button.sala { cursor: pointer; font: inherit; }
-button.sala { width: 100%; box-sizing: border-box; text-align: left; }
-button.sala.livre { cursor: default; }
-.link { background: none; border: 0; padding: 0; text-align: left; font-family: inherit; color: inherit; cursor: pointer; }
-.link:hover { text-decoration: underline; }
-.maca-nome { font-weight: 700; font-size: 14px; }
-.maca-linha { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-.fila-rodape { display: flex; justify-content: space-between; align-items: flex-end; gap: 8px; flex-wrap: wrap; }
-
-.kpi-link { display: block; color: inherit; text-decoration: none; }
-.kpi-link:hover .card { border-color: var(--cor-principal); }
+/* ---- telas menores ---- */
+@media (max-width: 1360px) {
+  .painel-colunas { grid-template-columns: minmax(280px, 340px) minmax(0, 1fr); }
+  .col-salas { grid-column: 1 / -1; }
+  .col-salas .card { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 16px; }
+  .col-salas .titulo-linha { grid-column: 1 / -1; }
+  .col-salas .grupo-salas { border-top: 0; padding-top: 0; }
+}
+@media (max-width: 860px) {
+  .resumo { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .painel-colunas { grid-template-columns: minmax(0, 1fr); }
+  .col-salas .card { display: block; }
+  .col-salas .grupo-salas { padding: 10px 0; border-top: 1px solid var(--cor-borda); }
+  .col-salas .titulo-linha + .grupo-salas { border-top: 0; padding-top: 0; }
+}
+@media (max-width: 480px) {
+  .indicador { padding: 10px 12px; }
+  .indicador-valor { font-size: 22px; }
+  .indicador-rotulo { font-size: 13px; }
+  .enfs { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .enf { padding: 6px; }
+  .leito { padding: 6px; gap: 6px; }
+  .leito-letra { width: 20px; height: 20px; font-size: 12px; }
+  .leito-nome { font-size: 14px; }
+  .leito-detalhe .tag:nth-child(n+2) { display: none; }   /* no celular, só o alerta mais importante */
+}

@@ -21,23 +21,25 @@ export default function Layout() {
 
   return (
     <div className="app">
+      {/* uma faixa só: marca, menu e usuário (no celular o menu vai para a barra de baixo) */}
       <header className="topo">
-        <strong>Gestar Digital · COB</strong>
-        <div className="topo-direita">
-          <span className={`api ${apiOnline ? "ok" : "off"}`}>
-            {apiOnline === null ? "verificando API..." : apiOnline ? "API online" : "API offline"}
-          </span>
-          <MenuUsuario />
-        </div>
+        <strong className="marca">Gestar Digital <span>COB</span></strong>
+        <nav className="menu" aria-label="Principal">
+          {LINKS.map((l) => (
+            <NavLink key={l.to} to={l.to} end={l.to === "/"}>
+              {l.label}
+            </NavLink>
+          ))}
+        </nav>
+        <MenuUsuario />
       </header>
 
-      <nav className="menu" aria-label="Principal">
-        {LINKS.map((l) => (
-          <NavLink key={l.to} to={l.to} end={l.to === "/"}>
-            {l.label}
-          </NavLink>
-        ))}
-      </nav>
+      {/* a situação da API só aparece quando há problema */}
+      {apiOnline === false && (
+        <div className="aviso-conexao" role="alert">
+          Sem conexão com o servidor. Os dados podem estar desatualizados.
+        </div>
+      )}
 
       <main className="conteudo">
         <Outlet />

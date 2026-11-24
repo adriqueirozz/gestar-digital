@@ -153,10 +153,6 @@ export default function Relatorio() {
   useEffect(() => {
     let ativo = true;
 
-    setCarregando(true);
-    setErro("");
-    setDados(null);
-
     getRelatorioMensal(mes)
       .then((resultado) => {
         if (ativo) setDados(resultado);
@@ -172,6 +168,14 @@ export default function Relatorio() {
       ativo = false;
     };
   }, [mes]);
+
+  // Limpa a tela ao trocar de mês; o efeito acima só busca os dados novos.
+  function trocarMes(novoMes) {
+    setMes(novoMes);
+    setCarregando(true);
+    setErro("");
+    setDados(null);
+  }
 
 
   
@@ -215,7 +219,7 @@ export default function Relatorio() {
             <input
               type="month"
               value={mes}
-              onChange={(evento) => setMes(evento.target.value)}
+              onChange={(evento) => trocarMes(evento.target.value)}
             />
           </label>
 

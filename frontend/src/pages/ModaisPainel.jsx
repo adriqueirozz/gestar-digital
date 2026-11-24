@@ -3,25 +3,26 @@ import {
   alocarPaciente, atualizarPaciente, concluirPendencia, criarPendencia, editarMaca, getDestinos,
   getPaciente, mudarSituacaoLeito, registrarParto, registrarSaida,
 } from "../api.js";
+import ItemPendencia from "../components/ItemPendencia.jsx";
 import Botao from "../components/ui/Botao.jsx";
 import Chip from "../components/ui/Chip.jsx";
 import Modal from "../components/ui/Modal.jsx";
 import Tag from "../components/ui/Tag.jsx";
 import { usePodeEditar } from "../auth/useSessao.js";
 import "./modais.css";
-import { fmtRestante, rotuloStatus, tomStatus } from "./pendenciasUtil.js";
 
 const FUSO = "America/Recife";
 const NOME_PERFIL = { gestante: "Gestante", puerpera: "Puérpera", abortamento: "Abortamento" };
 const TOM_PERFIL = { gestante: "rosa", puerpera: "roxo", abortamento: "aviso" };
 const MOTIVO = { alocacao: "Alocada", movimentacao: "Movida", saida: "Saída" };
 const DESFECHO = { casa: "Alta para casa", alojamento: "Alojamento conjunto", transferencia: "Transferência" };
+const TIPO_PARTO = { normal: "normal", cesarea: "cesárea", forceps: "fórceps" };
 const MARCAS = [
   ["parindo", "Parindo"], ["comorbidade", "Comorbidade"], ["atb", "ATB"],
   ["reserva_sanguinea", "Reserva sanguínea"], ["tarh", "TARH"],
 ];
 
-export const agoraLocal = () => new Date().toLocaleString("sv-SE", { timeZone: FUSO }).slice(0, 16).replace(" ", "T");
+const agoraLocal = () => new Date().toLocaleString("sv-SE", { timeZone: FUSO }).slice(0, 16).replace(" ", "T");
 const fmt = (iso) =>
   iso ? new Date(iso).toLocaleString("pt-BR", { timeZone: FUSO, day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "—";
 const fmtEspera = (min) => (min == null ? "—" : min < 60 ? `${min} min` : `${Math.floor(min / 60)}h${String(min % 60).padStart(2, "0")}`);
@@ -53,6 +54,24 @@ function Campo({ rotulo, children }) {
   );
 }
 
+// Horário do registro: por padrão "agora"; o campo de data e hora só aparece se a pessoa quiser mudar.
+function Horario({ valor, onMudar }) {
+  const [editando, setEditando] = useState(false);
+  if (!editando) {
+    return (
+      <p className="horario">
+        Horário: <b>agora, {valor.slice(11)}</b>{" "}
+        <button type="button" className="link link-acao" onClick={() => setEditando(true)}>alterar</button>
+      </p>
+    );
+  }
+  return (
+    <Campo rotulo="Data e hora">
+      <input type="datetime-local" value={valor} max={agoraLocal()} onChange={(e) => onMudar(e.target.value)} autoFocus />
+    </Campo>
+  );
+}
+
 /* ------------------------------------------------------------------ ficha da paciente */
 export function ModalPaciente({ id, onFechar, onMudou, onAlocar }) {
   const [p, setP] = useState(null);
@@ -81,123 +100,140 @@ export function ModalPaciente({ id, onFechar, onMudou, onAlocar }) {
       onMudou();
     });
 
+  // abre/fecha o formulário de parto ou saída, sempre com o horário de agora
+  function alternar(qual) {
+    if (acao === qual) return setAcao(null);
+    if (qual === "parto") setParto({ ...parto, data_hora: agoraLocal() });
+    if (qual === "saida") setSaida({ ...saida, data_hora: agoraLocal() });
+    setAcao(qual);
+  }
+
   const ativa = p && p.status === "ativa";
+  const local = p && (p.localizacao ? p.localizacao.nome : ativa ? "Aguardando leito" : null);
+  // perfil e situação ficam na mesma linha do prontuário, sem ocupar uma linha só para eles
+  const subtitulo = p && (
+    <span className="ficha-sub">
+      {[`Prontuário ${p.prontuario ?? "—"}`, local].filter(Boolean).join(" · ")}
+      <Tag tom={TOM_PERFIL[p.perfil] || "neutro"}>{NOME_PERFIL[p.perfil] || p.perfil}</Tag>
+      {p.status === "saiu" && <Tag tom="neutro">Saiu: {DESFECHO[p.desfecho] || p.desfecho}</Tag>}
+    </span>
+  );
 
   return (
-    <Modal aberto titulo={p ? p.nome : "Paciente"} subtitulo={p ? `Prontuário ${p.prontuario ?? "—"}` : ""} onFechar={onFechar} largura={680}>
+    <Modal aberto titulo={p ? p.nome : "Paciente"} subtitulo={subtitulo} onFechar={onFechar} largura={680}>
       {!p ? (
         <p>{erro || "Carregando..."}</p>
       ) : (
-        <div className="modal-corpo">
+        <div className="modal-corpo ficha">
           {erro && <p className="erro" role="alert">{erro}</p>}
 
-          <div className="marcas">
-            <Tag tom={TOM_PERFIL[p.perfil] || "neutro"}>{NOME_PERFIL[p.perfil] || p.perfil}</Tag>
-            {p.status === "saiu" && <Tag tom="neutro">Saiu: {DESFECHO[p.desfecho] || p.desfecho}</Tag>}
-          </div>
+          {/* ações principais primeiro */}
+          {ativa && podeEditar && (
+            <div className="linha-acoes">
+              <Botao variante="primario" onClick={() => onAlocar({ id: p.id, nome: p.nome })}>
+                {p.localizacao ? "Mover" : "Alocar"}
+              </Botao>
+              {!p.parto && <Botao aria-expanded={acao === "parto"} onClick={() => alternar("parto")}>Registrar parto</Botao>}
+              <Botao aria-expanded={acao === "saida"} onClick={() => alternar("saida")}>Registrar saída</Botao>
+            </div>
+          )}
 
-          <div className="dados">
-            <div><small>Local</small>{p.localizacao ? p.localizacao.nome : ativa ? "Aguardando alocação" : "—"}</div>
-            <div><small>GPA / IG</small>{p.gpa || "—"} · {p.ig || "—"}</div>
-            <div><small>Entrada no COB</small>{fmt(p.chegada_em)}{p.chegada_tem_hora ? "" : " (sem hora)"}</div>
-            <div><small>Tempo no COB</small>{fmtEspera(p.espera_min)}</div>
-            <div><small>Pós-parto</small>{p.parto ? `${p.parto.horas}h (${p.parto.tipo}, ${p.parto.nascimento})` : "—"}
-              {p.parto?.registrado_por && <small>registrado por {p.parto.registrado_por}</small>}</div>
-            <div><small>Diagnóstico</small>{p.diagnostico || "—"}</div>
-          </div>
-          {p.observacoes && <div className="dados"><div><small>Observações da planilha</small>{p.observacoes}</div></div>}
+          {acao === "parto" && (
+            <div className="caixa">
+              <div className="campos-linha">
+                <Campo rotulo="Tipo de parto">
+                  <select value={parto.tipo} onChange={(e) => setParto({ ...parto, tipo: e.target.value })}>
+                    <option value="normal">Normal</option><option value="cesarea">Cesárea</option><option value="forceps">Fórceps</option>
+                  </select>
+                </Campo>
+                <Campo rotulo="Nascimento">
+                  <select value={parto.nascimento} onChange={(e) => setParto({ ...parto, nascimento: e.target.value })}>
+                    <option value="vivo">Vivo</option><option value="natimorto">Natimorto</option>
+                  </select>
+                </Campo>
+              </div>
+              <Horario valor={parto.data_hora} onMudar={(v) => setParto({ ...parto, data_hora: v })} />
+              <div className="linha-acoes">
+                <Botao variante="primario" disabled={ocupado}
+                  onClick={() => executar(async () => { await registrarParto(id, parto); setAcao(null); await carregar(); onMudou(); })}>
+                  Confirmar parto
+                </Botao>
+                <Botao onClick={() => setAcao(null)}>Cancelar</Botao>
+              </div>
+            </div>
+          )}
+
+          {acao === "saida" && (
+            <div className="caixa">
+              <Campo rotulo="Desfecho">
+                <select value={saida.desfecho} onChange={(e) => setSaida({ ...saida, desfecho: e.target.value })}>
+                  {Object.entries(DESFECHO).map(([v, r]) => <option key={v} value={v}>{r}</option>)}
+                </select>
+              </Campo>
+              <Horario valor={saida.data_hora} onMudar={(v) => setSaida({ ...saida, data_hora: v })} />
+              <p className="nota">O leito vai para limpeza automaticamente.</p>
+              <div className="linha-acoes">
+                <Botao variante="primario" disabled={ocupado}
+                  onClick={() => executar(async () => { await registrarSaida(id, saida); onMudou(); onFechar(); })}>
+                  Confirmar saída
+                </Botao>
+                <Botao onClick={() => setAcao(null)}>Cancelar</Botao>
+              </div>
+            </div>
+          )}
+
+          {/* só mostra o que tem valor */}
+          <dl className="dados">
+            <div><dt>GPA · IG</dt><dd>{p.gpa || "—"} · {p.ig || "—"}</dd></div>
+            <div><dt>Diagnóstico</dt><dd>{p.diagnostico || "—"}</dd></div>
+            <div><dt>Entrada no COB</dt><dd>{fmt(p.chegada_em)}{p.chegada_tem_hora ? "" : " (sem hora)"}</dd></div>
+            {p.espera_min != null && <div><dt>Tempo no COB</dt><dd>{fmtEspera(p.espera_min)}</dd></div>}
+            {p.parto && (
+              <div>
+                <dt>Pós-parto</dt>
+                <dd>{p.parto.horas}h · {TIPO_PARTO[p.parto.tipo] || p.parto.tipo}, {p.parto.nascimento}
+                  {p.parto.registrado_por && <small>registrado por {p.parto.registrado_por}</small>}</dd>
+              </div>
+            )}
+            {p.observacoes && <div className="dados-largo"><dt>Observações da planilha</dt><dd>{p.observacoes}</dd></div>}
+          </dl>
 
           {ativa && !podeEditar && <SinalizacoesLeitura p={p} />}
 
           {ativa && podeEditar && (
-            <>
-              <h3 className="secao-titulo">Sinalizações</h3>
-              <div className="marcas">
+            <section className="ficha-secao" aria-labelledby="titulo-sinalizacoes">
+              <h3 className="secao-titulo" id="titulo-sinalizacoes">Sinalizações</h3>
+              <div className="grade-chips">
                 {MARCAS.map(([campo, rotulo]) => (
-                  <label key={campo}>
-                    <input type="checkbox" checked={!!p[campo]} disabled={ocupado} onChange={(e) => salvar({ [campo]: e.target.checked })} />
-                    {rotulo}
-                  </label>
+                  <Chip key={campo} pequeno selecionado={!!p[campo]} disabled={ocupado}
+                    onClick={() => salvar({ [campo]: !p[campo] })}>
+                    {p[campo] ? "✓ " : ""}{rotulo}
+                  </Chip>
                 ))}
               </div>
               <div className="campos-linha">
+                <Campo rotulo="Alergia">
+                  <input value={alergia} onChange={(e) => setAlergia(e.target.value)}
+                    onBlur={() => alergia !== (p.alergia ?? "") && salvar({ alergia })} placeholder="nenhuma" />
+                </Campo>
+                <Campo rotulo="Bolsa rota há (horas)">
+                  <input type="number" min="0" max="240" value={bolsa} onChange={(e) => setBolsa(e.target.value)}
+                    onBlur={() => String(bolsa) !== String(p.bolsa_rota_horas ?? "") && salvar({ bolsa_rota_horas: bolsa === "" ? null : Number(bolsa) })}
+                    placeholder="sem bolsa rota" />
+                </Campo>
                 <Campo rotulo="Perfil">
                   <select value={p.perfil} disabled={ocupado} onChange={(e) => salvar({ perfil: e.target.value })}>
                     {Object.entries(NOME_PERFIL).map(([v, r]) => <option key={v} value={v}>{r}</option>)}
                   </select>
                 </Campo>
-                <Campo rotulo="Alergia">
-                  <input value={alergia} onChange={(e) => setAlergia(e.target.value)} onBlur={() => alergia !== (p.alergia ?? "") && salvar({ alergia })} placeholder="ex.: dipirona" />
-                </Campo>
-                <Campo rotulo="Bolsa rota há (horas)">
-                  <input type="number" min="0" max="240" value={bolsa} onChange={(e) => setBolsa(e.target.value)}
-                    onBlur={() => String(bolsa) !== String(p.bolsa_rota_horas ?? "") && salvar({ bolsa_rota_horas: bolsa === "" ? null : Number(bolsa) })}
-                    placeholder="vazio = sem bolsa rota" />
-                </Campo>
               </div>
               {p.bolsa_rota_horas != null && p.bolsa_rota_horas >= 18 && (
                 <p className="erro">Bolsa rota há {p.bolsa_rota_horas}h: acima de 18h, avaliar ATB (decisão da equipe).</p>
               )}
-
-              <div className="linha-acoes">
-                <Botao variante="primario" onClick={() => onAlocar({ id: p.id, nome: p.nome })}>
-                  {p.localizacao ? "Mover" : "Alocar"}
-                </Botao>
-                {!p.parto && <Botao onClick={() => setAcao(acao === "parto" ? null : "parto")}>Registrar parto</Botao>}
-                <Botao onClick={() => setAcao(acao === "saida" ? null : "saida")}>Registrar saída</Botao>
-              </div>
-
-              {acao === "parto" && (
-                <div className="caixa">
-                  <div className="campos-linha">
-                    <Campo rotulo="Tipo de parto">
-                      <select value={parto.tipo} onChange={(e) => setParto({ ...parto, tipo: e.target.value })}>
-                        <option value="normal">Normal</option><option value="cesarea">Cesárea</option><option value="forceps">Fórceps</option>
-                      </select>
-                    </Campo>
-                    <Campo rotulo="Nascimento">
-                      <select value={parto.nascimento} onChange={(e) => setParto({ ...parto, nascimento: e.target.value })}>
-                        <option value="vivo">Vivo</option><option value="natimorto">Natimorto</option>
-                      </select>
-                    </Campo>
-                    <Campo rotulo="Data e hora">
-                      <input type="datetime-local" value={parto.data_hora} max={agoraLocal()} onChange={(e) => setParto({ ...parto, data_hora: e.target.value })} />
-                    </Campo>
-                  </div>
-                  <div className="linha-acoes">
-                    <Botao variante="primario" disabled={ocupado}
-                      onClick={() => executar(async () => { await registrarParto(id, parto); setAcao(null); await carregar(); onMudou(); })}>
-                      Confirmar parto
-                    </Botao>
-                  </div>
-                </div>
-              )}
-
-              {acao === "saida" && (
-                <div className="caixa">
-                  <div className="campos-linha">
-                    <Campo rotulo="Desfecho">
-                      <select value={saida.desfecho} onChange={(e) => setSaida({ ...saida, desfecho: e.target.value })}>
-                        {Object.entries(DESFECHO).map(([v, r]) => <option key={v} value={v}>{r}</option>)}
-                      </select>
-                    </Campo>
-                    <Campo rotulo="Data e hora">
-                      <input type="datetime-local" value={saida.data_hora} max={agoraLocal()} onChange={(e) => setSaida({ ...saida, data_hora: e.target.value })} />
-                    </Campo>
-                  </div>
-                  <p className="nota">O leito ou a maca é liberado automaticamente (leito vai para limpeza).</p>
-                  <div className="linha-acoes">
-                    <Botao variante="primario" disabled={ocupado}
-                      onClick={() => executar(async () => { await registrarSaida(id, saida); onMudou(); onFechar(); })}>
-                      Confirmar saída
-                    </Botao>
-                  </div>
-                </div>
-              )}
-            </>
+            </section>
           )}
 
-            {ativa && (
+          {ativa && (
             <PendenciasDaPaciente
               pacienteId={p.id}
               pendencias={p.pendencias}
@@ -206,16 +242,19 @@ export function ModalPaciente({ id, onFechar, onMudou, onAlocar }) {
             />
           )}
 
-          <h3 className="secao-titulo">Histórico</h3>
-          <ul className="historico">
-            {p.historico.length === 0 && <li>Nenhuma movimentação registrada.</li>}
-            {p.historico.map((h, i) => (
-              <li key={i}>
-                <b>{MOTIVO[h.motivo] || h.motivo}</b> · {h.origem ? `${h.origem} → ` : ""}{h.destino || "fora do COB"}
-                <br /><small>{fmt(h.data_hora)}{h.usuario ? ` · por ${h.usuario}` : ""}{h.observacao ? ` · ${h.observacao}` : ""}</small>
-              </li>
-            ))}
-          </ul>
+          {/* histórico fica recolhido: é consulta, não ação */}
+          <details className="ficha-historico">
+            <summary>Histórico de movimentações ({p.historico.length})</summary>
+            <ul className="historico">
+              {p.historico.length === 0 && <li>Nenhuma movimentação registrada.</li>}
+              {p.historico.map((h, i) => (
+                <li key={i}>
+                  <b>{MOTIVO[h.motivo] || h.motivo}</b> · {h.origem ? `${h.origem} → ` : ""}{h.destino || "fora do COB"}
+                  <br /><small>{fmt(h.data_hora)}{h.usuario ? ` · por ${h.usuario}` : ""}{h.observacao ? ` · ${h.observacao}` : ""}</small>
+                </li>
+              ))}
+            </ul>
+          </details>
         </div>
       )}
     </Modal>
@@ -226,7 +265,7 @@ export function ModalPaciente({ id, onFechar, onMudou, onAlocar }) {
 function SinalizacoesLeitura({ p }) {
   const ativas = MARCAS.filter(([campo]) => p[campo]).map(([, rotulo]) => rotulo);
   return (
-    <>
+    <section className="ficha-secao">
       <h3 className="secao-titulo">Sinalizações</h3>
       <div className="marcas">
         {ativas.length === 0 && !p.alergia && p.bolsa_rota_horas == null && <span className="nota">Nenhuma sinalização.</span>}
@@ -237,67 +276,97 @@ function SinalizacoesLeitura({ p }) {
       {p.bolsa_rota_horas != null && p.bolsa_rota_horas >= 18 && (
         <p className="erro">Bolsa rota há {p.bolsa_rota_horas}h: acima de 18h, avaliar ATB (decisão da equipe).</p>
       )}
-    </>
+    </section>
   );
 }
 
 /* ------------------------------------------------------------------ alocar / mover */
+// leitos livres agrupados por enfermaria: "Enf. 4  [A] [B]"
+function agruparLeitos(leitos) {
+  const grupos = [];
+  for (const l of leitos) {
+    const enf = l.codigo.slice(1, -1);
+    const ultimo = grupos[grupos.length - 1];
+    if (ultimo && ultimo.enf === enf) ultimo.leitos.push(l);
+    else grupos.push({ enf, leitos: [l] });
+  }
+  return grupos;
+}
+
 export function ModalAlocar({ paciente, onFechar, onMudou }) {
   const [dest, setDest] = useState(null);
   const [escolhido, setEscolhido] = useState(null);
   const [localMaca, setLocalMaca] = useState("");
   const [dataHora, setDataHora] = useState(agoraLocal());
   const [obs, setObs] = useState("");
+  const [comObs, setComObs] = useState(false);
   const { erro, ocupado, executar } = useAcao();
 
   useEffect(() => {
     executar(async () => setDest(await getDestinos()));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const grupos = dest
-    ? [["Leitos livres", dest.leitos], ["Salas de parto", dest.salas_parto], ["Cirurgia / curetagem", dest.salas_cirurgia], ["Apoio", dest.apoio]]
+  const outros = dest
+    ? [["Salas de parto", dest.salas_parto], ["Cirurgia / curetagem", dest.salas_cirurgia], ["Apoio", dest.apoio]]
     : [];
+  const opcao = (l, rotulo, aria) => (
+    <Chip key={l.codigo} selecionado={escolhido === l.codigo} onClick={() => setEscolhido(l.codigo)} aria-label={aria}>{rotulo}</Chip>
+  );
 
   return (
     <Modal aberto titulo="Alocar / mover" subtitulo={paciente.nome} onFechar={onFechar} largura={680}>
       <div className="modal-corpo">
         {erro && <p className="erro" role="alert">{erro}</p>}
         {!dest && !erro && <p>Carregando destinos...</p>}
-        {grupos.map(([titulo, itens]) => (
-          <div key={titulo}>
-            <h3 className="secao-titulo">{titulo}</h3>
-            {itens.length === 0 ? (
-              <p className="nota">Nenhum disponível.</p>
+
+        {dest && (
+          <section>
+            <h3 className="secao-titulo">Leitos livres</h3>
+            {dest.leitos.length === 0 ? (
+              <p className="nota">Nenhum leito livre.</p>
             ) : (
-              <div className="grade-chips">
-                {itens.map((l) => (
-                  <Chip key={l.codigo} selecionado={escolhido === l.codigo} onClick={() => setEscolhido(l.codigo)}>{l.nome}</Chip>
+              <div className="grade-enfermarias">
+                {agruparLeitos(dest.leitos).map((g) => (
+                  <div className="destino-enf" key={g.enf}>
+                    <span>Enf. {g.enf}</span>
+                    {g.leitos.map((l) => opcao(l, l.codigo.slice(-1), `Enfermaria ${g.enf}, leito ${l.codigo.slice(-1)}`))}
+                  </div>
                 ))}
               </div>
             )}
-          </div>
+          </section>
+        )}
+        {outros.map(([titulo, itens]) => itens.length > 0 && (
+          <section key={titulo}>
+            <h3 className="secao-titulo">{titulo}</h3>
+            <div className="grade-chips">{itens.map((l) => opcao(l, l.nome))}</div>
+          </section>
         ))}
         {dest && (
-          <div>
+          <section>
             <h3 className="secao-titulo">Sem leito</h3>
             <div className="grade-chips">
-              <Chip selecionado={escolhido === "NOVA_MACA"} onClick={() => setEscolhido("NOVA_MACA")}>Nova maca</Chip>
+              <Chip selecionado={escolhido === "NOVA_MACA"} onClick={() => setEscolhido("NOVA_MACA")}>Maca</Chip>
             </div>
-          </div>
+          </section>
         )}
         {escolhido === "NOVA_MACA" && (
-          <Campo rotulo="Local da maca">
-            <input value={localMaca} onChange={(e) => setLocalMaca(e.target.value)} placeholder="ex.: corredor próximo à enfermaria 3" />
+          <Campo rotulo="Onde fica a maca?">
+            <input value={localMaca} onChange={(e) => setLocalMaca(e.target.value)} placeholder="ex.: corredor próximo à enfermaria 3" autoFocus />
           </Campo>
         )}
-        <div className="campos-linha">
-          <Campo rotulo="Data e hora">
-            <input type="datetime-local" value={dataHora} max={agoraLocal()} onChange={(e) => setDataHora(e.target.value)} />
-          </Campo>
-          <Campo rotulo="Observação (opcional)">
-            <input value={obs} onChange={(e) => setObs(e.target.value)} />
-          </Campo>
+
+        <div className="detalhes-registro">
+          <Horario valor={dataHora} onMudar={setDataHora} />
+          {comObs ? (
+            <Campo rotulo="Observação">
+              <input value={obs} onChange={(e) => setObs(e.target.value)} autoFocus />
+            </Campo>
+          ) : (
+            <button type="button" className="link link-acao" onClick={() => setComObs(true)}>+ Adicionar observação</button>
+          )}
         </div>
+
         <div className="linha-acoes">
           <Botao variante="primario" disabled={!escolhido || ocupado}
             onClick={() => executar(async () => {
@@ -324,13 +393,14 @@ export function ModalLeito({ leito, onFechar, onMudou }) {
       onFechar();
     });
   const ROTULO = { livre: "Livre", limpeza: "Em limpeza", indisponivel: "Indisponível" };
+  const titulo = `Enf. ${leito.codigo.slice(1, -1)} · Leito ${leito.codigo.slice(-1)}`;
 
   return (
-    <Modal aberto titulo={`Leito ${leito.codigo}`} subtitulo={ROTULO[leito.situacao]} onFechar={onFechar} largura={460}>
+    <Modal aberto titulo={titulo} subtitulo={ROTULO[leito.situacao]} onFechar={onFechar} largura={460}>
       <div className="modal-corpo">
         {erro && <p className="erro" role="alert">{erro}</p>}
         <div className="linha-acoes">
-          {leito.situacao === "limpeza" && <Botao variante="primario" disabled={ocupado} onClick={() => mudar("normal")}>Liberar leito (limpeza concluída)</Botao>}
+          {leito.situacao === "limpeza" && <Botao variante="primario" disabled={ocupado} onClick={() => mudar("normal")}>Limpeza concluída: liberar leito</Botao>}
           {leito.situacao === "indisponivel" && <Botao variante="primario" disabled={ocupado} onClick={() => mudar("normal")}>Tornar disponível</Botao>}
           {leito.situacao === "livre" && (
             <>
@@ -339,7 +409,7 @@ export function ModalLeito({ leito, onFechar, onMudou }) {
             </>
           )}
         </div>
-        <p className="nota">Para ocupar este leito, use o botão Alocar na fila de espera.</p>
+        {leito.situacao === "livre" && <p className="nota">Para ocupar este leito, use Alocar na fila de espera.</p>}
       </div>
     </Modal>
   );
@@ -350,13 +420,12 @@ export function ModalMaca({ maca, onFechar, onMudou }) {
   const [local, setLocal] = useState(maca.local || "");
   const { erro, ocupado, executar } = useAcao();
   return (
-    <Modal aberto titulo="Editar local da maca" subtitulo={maca.nome} onFechar={onFechar} largura={460}>
+    <Modal aberto titulo="Local da maca" subtitulo={maca.nome} onFechar={onFechar} largura={460}>
       <div className="modal-corpo">
         {erro && <p className="erro" role="alert">{erro}</p>}
-        <Campo rotulo="Local">
-          <input value={local} onChange={(e) => setLocal(e.target.value)} placeholder="ex.: corredor próximo à enfermaria 3" />
+        <Campo rotulo="Onde fica a maca?">
+          <input value={local} onChange={(e) => setLocal(e.target.value)} placeholder="ex.: corredor próximo à enfermaria 3" autoFocus />
         </Campo>
-        <p className="nota">A maca some da lista quando a paciente é movida para um leito.</p>
         <div className="linha-acoes">
           <Botao variante="primario" disabled={ocupado}
             onClick={() => executar(async () => { await editarMaca(maca.codigo, local); onMudou(); onFechar(); })}>
@@ -375,47 +444,40 @@ function PendenciasDaPaciente({ pacienteId, pendencias, podeEditar, aoMudar }) {
   const [prazo, setPrazo] = useState(12);
   const { erro, ocupado, executar } = useAcao();
 
+  function adicionar(e) {
+    e.preventDefault();
+    if (!descricao.trim()) return;
+    executar(async () => {
+      await criarPendencia({ paciente_id: pacienteId, descricao, prazo_horas: prazo });
+      setDescricao("");
+      await aoMudar();
+    });
+  }
+
   return (
-    <>
-      <h3 className="secao-titulo">Pendências</h3>
+    <section className="ficha-secao" aria-labelledby="titulo-pendencias">
+      <h3 className="secao-titulo" id="titulo-pendencias">Pendências</h3>
       {erro && <p className="erro" role="alert">{erro}</p>}
-      {pendencias.length === 0 && <p className="nota">Nenhuma pendência aberta.</p>}
-      <ul className="historico">
-        {pendencias.map((x) => (
-          <li key={x.id}>
-            <b>{x.descricao}</b> <Tag tom={tomStatus[x.status]}>{rotuloStatus[x.status]}</Tag>
-            <br /><small>{fmtRestante(x.restante_min)} · prazo {x.prazo_horas}h{x.criada_por ? ` · criada por ${x.criada_por}` : ""}</small>{" "}
-            {podeEditar && (
-              <Botao disabled={ocupado} onClick={() => executar(async () => { await concluirPendencia(x.id); await aoMudar(); })}>
-                Concluir
-              </Botao>
-            )}
-          </li>
-        ))}
-      </ul>
-      {podeEditar && (<>
-      <div className="campos-linha">
-        <Campo rotulo="Nova pendência">
-          <input value={descricao} maxLength={200} onChange={(e) => setDescricao(e.target.value)} placeholder="ex.: coletar exames" />
-        </Campo>
-        <Campo rotulo="Prazo">
-          <select value={prazo} onChange={(e) => setPrazo(Number(e.target.value))}>
-            <option value={12}>12 horas</option>
-            <option value={24}>24 horas</option>
+      {pendencias.length === 0 && !podeEditar && <p className="nota">Nenhuma pendência aberta.</p>}
+      {pendencias.length > 0 && (
+        <ul className="pend-lista">
+          {pendencias.map((x) => (
+            <ItemPendencia key={x.id} pendencia={x} podeEditar={podeEditar} ocupado={ocupado}
+              onConcluir={() => executar(async () => { await concluirPendencia(x.id); await aoMudar(); })} />
+          ))}
+        </ul>
+      )}
+      {podeEditar && (
+        <form className="pend-nova" onSubmit={adicionar}>
+          <input value={descricao} maxLength={200} onChange={(e) => setDescricao(e.target.value)}
+            placeholder="Nova pendência (ex.: coletar exames)" aria-label="Nova pendência" />
+          <select value={prazo} onChange={(e) => setPrazo(Number(e.target.value))} aria-label="Prazo">
+            <option value={12}>em 12h</option>
+            <option value={24}>em 24h</option>
           </select>
-        </Campo>
-      </div>
-      <div className="linha-acoes">
-        <Botao disabled={!descricao.trim() || ocupado}
-          onClick={() => executar(async () => {
-            await criarPendencia({ paciente_id: pacienteId, descricao, prazo_horas: prazo });
-            setDescricao("");
-            await aoMudar();
-          })}>
-          Adicionar pendência
-        </Botao>
-      </div>
-      </>)}
-    </>
+          <Botao type="submit" disabled={!descricao.trim() || ocupado}>Adicionar</Botao>
+        </form>
+      )}
+    </section>
   );
 }

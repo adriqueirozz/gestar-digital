@@ -94,7 +94,7 @@ def calcular_relatorio(db: Session, mes: str):
         1 for p in partos if p.tipo == "cesarea"
     )
 
-    # Óbitos neonatais registrados como natimortos
+    # Natimortos (óbitos fetais). Óbito neonatal (após nascer vivo) não é registrado no sistema.
     obitos_neonatais = sum(
         1 for p in partos if p.nascimento == "natimorto"
     )
@@ -191,7 +191,6 @@ def calcular_relatorio(db: Session, mes: str):
             "total": total_partos,
             "normal": parto_normal,
             "cesarea": cesareas,
-            "forceps": sum(1 for p in partos if p.tipo == "forceps"),
         },
         "obitos": {
             "neonatais": obitos_neonatais,
@@ -216,12 +215,11 @@ def dados_csv(relatorio: dict):
         ("Internadas atualmente", relatorio["atendimentos"]["internadas"]),
         ("Altas", relatorio["saidas"]["altas"]),
         ("Transferências", relatorio["saidas"]["transferencias"]),
-        ("Alojamento", relatorio["saidas"]["alojamento"]),
+        ("Alojamento conjunto", relatorio["saidas"]["alojamento"]),
         ("Nascimentos", relatorio["nascimentos"]["total"]),
-        ("Parto Vaginal", relatorio["nascimentos"]["normal"]),
+        ("Parto vaginal", relatorio["nascimentos"]["normal"]),
         ("Cesáreas", relatorio["nascimentos"]["cesarea"]),
-        ("Fórceps", relatorio["nascimentos"]["forceps"]),
-        ("Óbitos neonatais", relatorio["obitos"]["neonatais"]),
+        ("Natimortos", relatorio["obitos"]["neonatais"]),
         ("Óbitos maternos", "Não disponível"),
         ("Permanência média (horas)", relatorio["permanencia"]["media_horas"]),
         ("Ocupação atual (%)", relatorio["permanencia"]["ocupacao_atual"]),
@@ -299,12 +297,11 @@ def gerar_pdf(relatorio: dict):
         ["Internadas atualmente", relatorio["atendimentos"]["internadas"]],
         ["Altas", relatorio["saidas"]["altas"]],
         ["Transferências", relatorio["saidas"]["transferencias"]],
-        ["Alojamento", relatorio["saidas"]["alojamento"]],
+        ["Alojamento conjunto", relatorio["saidas"]["alojamento"]],
         ["Nascimentos", relatorio["nascimentos"]["total"]],
-        ["Parto Vaginal", relatorio["nascimentos"]["normal"]],
+        ["Parto vaginal", relatorio["nascimentos"]["normal"]],
         ["Cesáreas", relatorio["nascimentos"]["cesarea"]],
-        ["Fórceps", relatorio["nascimentos"]["forceps"]],
-        ["Óbitos neonatais", relatorio["obitos"]["neonatais"]],
+        ["Natimortos", relatorio["obitos"]["neonatais"]],
         ["Óbitos maternos", "Não disponível"],
         [
             "Permanência média (horas)",

@@ -100,7 +100,7 @@ class Parto(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     paciente_id: Mapped[int] = mapped_column(ForeignKey("pacientes.id"), unique=True)
     data_hora: Mapped[datetime] = mapped_column(DateTime, default=agora)
-    tipo: Mapped[str] = mapped_column(String(20))  # normal | cesarea | forceps
+    tipo: Mapped[str] = mapped_column(String(20))  # normal (parto vaginal) | cesarea
     nascimento: Mapped[str] = mapped_column(String(20))  # vivo | natimorto
     usuario_id: Mapped[int | None] = mapped_column(ForeignKey("usuarios.id"))
     paciente: Mapped["Paciente"] = relationship(back_populates="parto")

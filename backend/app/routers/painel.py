@@ -18,7 +18,7 @@ def _tags(p, agora) -> list[dict]:
     """Sinalizações curtas da paciente (apoio à decisão; a equipe é quem decide)."""
     tags = []
     if p.parindo:
-        tags.append({"txt": "Parindo", "tom": "alerta"})
+        tags.append({"txt": "Em trabalho de parto", "tom": "alerta"})
     if p.comorbidade:
         tags.append({"txt": "Comorbidade", "tom": "aviso"})
     if p.bolsa_rota_em:
@@ -30,7 +30,7 @@ def _tags(p, agora) -> list[dict]:
     if p.atb:
         tags.append({"txt": "ATB", "tom": "info"})
     if p.reserva_sanguinea:
-        tags.append({"txt": "Reserva sangue", "tom": "info"})
+        tags.append({"txt": "Reserva sanguínea", "tom": "info"})
     if p.tarh:
         tags.append({"txt": "TARH", "tom": "info"})
     if p.alergia:
@@ -39,7 +39,7 @@ def _tags(p, agora) -> list[dict]:
 
 
 def _prioridade(p, agora) -> tuple[int, str]:
-    """Pontuação simples e visível: tempo de espera, bolsa rota, comorbidade, parindo e abortamento."""
+    """Pontuação simples e visível: tempo de espera, bolsa rota, comorbidade, trabalho de parto e abortamento."""
     pontos = 0
     if p.parindo:
         pontos += 4

@@ -78,12 +78,11 @@ function gerarPrevia(dados) {
     ["internadas atualmente", dados.atendimentos.internadas],
     ["altas", dados.saidas.altas],
     ["transferencias", dados.saidas.transferencias],
-    ["alojamento", dados.saidas.alojamento],
+    ["alojamento_conjunto", dados.saidas.alojamento],
     ["nascimentos", dados.nascimentos.total],
-    ["parto_normal", dados.nascimentos.normal],
+    ["parto_vaginal", dados.nascimentos.normal],
     ["cesareas", dados.nascimentos.cesarea],
-    ["forceps", dados.nascimentos.forceps],
-    ["obitos_neonatais", dados.obitos.neonatais],
+    ["natimortos", dados.obitos.neonatais],
     ["obitos_maternos", "Não disponível"],
     ["permanencia_media_horas", dados.permanencia.media_horas],
     ["ocupacao_atual_percentual", dados.permanencia.ocupacao_atual],
@@ -297,7 +296,7 @@ export default function Relatorio() {
                   valor: dados.saidas.transferencias,
                 },
                 {
-                  label: "alojamento",
+                  label: "alojamento conjunto",
                   valor: dados.saidas.alojamento,
                 },
               ]}
@@ -327,7 +326,7 @@ export default function Relatorio() {
               titulo="Óbitos"
               itens={[
                 {
-                  label: "recém-nascidos",
+                  label: "natimortos",
                   valor: dados.obitos.neonatais,
                 },
                 {

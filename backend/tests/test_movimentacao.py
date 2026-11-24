@@ -79,3 +79,30 @@ def test_nova_maca_some_ao_mover(db):
 def test_data_no_futuro_e_recusada(db):
     with pytest.raises(HTTPException):
         movimentacao.data_ou_agora("2999-01-01T10:00")
+
+# ---- termos revisados com a equipe de saúde ----
+def test_forceps_nao_e_mais_registrado(db):
+    catalogo(db)
+    p = paciente(db)
+    with pytest.raises(HTTPException) as erro:
+        movimentacao.registrar_parto(db, p, "forceps", "vivo")
+    assert erro.value.status_code == 422
+    movimentacao.registrar_parto(db, p, "cesarea", "vivo")  # vaginal ("normal") e cesárea continuam
+
+
+def test_historico_da_saida_mostra_o_nome_do_desfecho(db):
+    catalogo(db)
+    p = paciente(db)
+    movimentacao.registrar_saida(db, p, "casa")
+    saida = db.query(models.Movimentacao).filter_by(motivo="saida").one()
+    assert saida.observacao == "Desfecho: Alta"
+
+
+def test_alertas_do_painel_usam_os_termos_revisados(db):
+    from app.routers.painel import _tags
+    p = paciente(db)
+    p.parindo = True
+    p.reserva_sanguinea = True
+    textos = [t["txt"] for t in _tags(p, models.agora())]
+    assert "Em trabalho de parto" in textos and "Parindo" not in textos
+    assert "Reserva sanguínea" in textos

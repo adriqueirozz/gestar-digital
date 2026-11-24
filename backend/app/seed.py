@@ -8,7 +8,7 @@ Uso (dentro de backend/):
 import sys
 from datetime import timedelta
 
-from app import models
+from app import config, models
 from app.database import Base, SessionLocal, engine
 
 # ---- catálogo do COB (ajuste aqui se o hospital confirmar números diferentes) ----
@@ -41,11 +41,12 @@ PACIENTES = [
 ]
 
 
-# ---- usuários de demonstração (G-16): um por perfil. Senhas só para uso local! ----
+# ---- usuários de demonstração (G-16): um por perfil ----
+# A senha vem de GESTAR_SENHA_DEMO (padrão "gestar123", só para a máquina local; o protótipo hospedado usa outra).
 USUARIOS = [
-    dict(nome="Enfermagem (demo)", login="enfermagem", perfil="enfermagem", senha="gestar123"),
-    dict(nome="Médico (demo)", login="medico", perfil="medico", senha="gestar123"),
-    dict(nome="Gestão (demo)", login="gestao", perfil="gestao", senha="gestar123"),
+    dict(nome="Enfermagem (demo)", login="enfermagem", perfil="enfermagem"),
+    dict(nome="Médico (demo)", login="medico", perfil="medico"),
+    dict(nome="Gestão (demo)", login="gestao", perfil="gestao"),
 ]
 
 
@@ -55,7 +56,7 @@ def criar_usuarios(db) -> int:
 
     existentes = {login for (login,) in db.query(models.Usuario.login)}
     novos = [models.Usuario(nome=u["nome"], login=u["login"], perfil=u["perfil"],
-                            senha_hash=gerar_hash_senha(u["senha"]))
+                            senha_hash=gerar_hash_senha(config.SENHA_DEMO))
              for u in USUARIOS if u["login"] not in existentes]
     db.add_all(novos)
     return len(novos)
@@ -158,7 +159,8 @@ def seed(com_pacientes: bool = True, recriar: bool = False) -> None:
 
 
 def _logins_demo() -> str:
-    return ", ".join(f"{u['login']} / {u['senha']}" for u in USUARIOS)
+    senha = "(senha definida em GESTAR_SENHA_DEMO)" if config.PRODUCAO else config.SENHA_DEMO
+    return ", ".join(u["login"] for u in USUARIOS) + f" / {senha}"
 
 
 if __name__ == "__main__":

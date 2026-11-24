@@ -19,3 +19,11 @@ def db():
     Base.metadata.create_all(engine)
     with Session(engine) as sessao:
         yield sessao
+
+@pytest.fixture(autouse=True)
+def limpar_bloqueio_de_login():
+    """O bloqueio por senha errada fica em memória: cada teste começa sem erros anteriores."""
+    from app import auth
+    auth.limpar_erros_login()
+    yield
+    auth.limpar_erros_login()

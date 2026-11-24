@@ -19,7 +19,8 @@ export default function App() {
         <Route path="/pendencias" element={<Pendencias />} />
         <Route path="/relatorio" element={<Relatorio />} />
         <Route path="/integracao" element={<Integracao />} />
-        <Route path="/componentes" element={<Componentes />} />
+        {/* Guia de estilo: tela interna da equipe, só em desenvolvimento */}
+        {import.meta.env.DEV && <Route path="/componentes" element={<Componentes />} />}
       </Route>
     </Routes>
   );

@@ -1,6 +1,8 @@
 import { EVENTO_SESSAO_EXPIRADA, getToken, setToken } from "./auth/sessao.js";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+// Desenvolvimento: API em http://localhost:8000 (ou VITE_API_URL).
+// Build de produção: a própria API serve as telas, então as chamadas vão para o mesmo endereço do site.
+const API_URL = import.meta.env.VITE_API_URL ?? (import.meta.env.DEV ? "http://localhost:8000" : "");
 
 // Toda chamada à API leva o token do usuário logado (G-17).
 // Se a API responder 401 (token vencido ou inválido), a sessão é encerrada e o app volta ao login.
@@ -73,7 +75,9 @@ export async function entrar(login, senha) {
       body: new URLSearchParams({ username: login, password: senha }),
     });
   } catch {
-    throw new Error("Não foi possível falar com a API. Ela está rodando?");
+    throw new Error(import.meta.env.DEV
+      ? "Não foi possível falar com a API. Ela está rodando?"
+      : "Não foi possível falar com o servidor. Aguarde alguns segundos e tente de novo.");
   }
   const dados = await resposta.json().catch(() => null);
   if (!resposta.ok) throw new Error((dados && dados.detail) || "Não foi possível entrar.");

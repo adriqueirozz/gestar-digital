@@ -1,4 +1,3 @@
-
 import calendar
 import csv
 import io
@@ -37,6 +36,162 @@ def periodo_mes(mes: str):
     return inicio, fim
 
 
+def mapa_saidas(db: Session):
+    """
+    Data de saída de cada paciente (id -> datetime, em UTC).
+    Usa Movimentacao (motivo == "saida") e, quando existir,
+    Paciente.saida_em tem prioridade.
+    """
+    saidas = {}
+
+    movimentacoes = (
+        db.query(models.Movimentacao)
+        .filter(models.Movimentacao.motivo == "saida")
+        .order_by(models.Movimentacao.data_hora.asc())
+        .all()
+    )
+
+    for movimentacao in movimentacoes:
+        saidas[movimentacao.paciente_id] = movimentacao.data_hora
+
+    com_saida = (
+        db.query(models.Paciente)
+        .filter(models.Paciente.saida_em.isnot(None))
+        .all()
+    )
+
+    for paciente in com_saida:
+        saidas[paciente.id] = paciente.saida_em
+
+    return saidas
+
+
+def carregar_historico(db: Session, fim: datetime):
+    """
+    Histórico de destinos de cada paciente até `fim`
+    (paciente_id -> [(data_hora, destino_id), ...], em ordem cronológica).
+    Ignora movimentações de saída e sem destino.
+    """
+    historico = {}
+
+    movimentacoes = (
+        db.query(models.Movimentacao)
+        .filter(models.Movimentacao.data_hora < fim)
+        .order_by(models.Movimentacao.data_hora.asc())
+        .all()
+    )
+
+    for movimentacao in movimentacoes:
+        if movimentacao.motivo == "saida" or movimentacao.destino_id is None:
+            continue
+
+        historico.setdefault(movimentacao.paciente_id, []).append(
+            (movimentacao.data_hora, movimentacao.destino_id)
+        )
+
+    return historico
+
+
+def calcular_ocupacao_media(
+    db: Session,
+    mes: str,
+    total_leitos: int,
+    saidas_por_paciente: dict,
+):
+    """
+    Média das ocupações diárias (fechamento de cada dia, 23:59:59 locais)
+    considerando apenas pacientes que estavam em LEITO naquele instante.
+    Retorna (ocupacao_media, leitos_ocupados_no_ultimo_dia).
+    """
+    ano, numero_mes = map(int, mes.split("-"))
+    _, fim = periodo_mes(mes)
+
+    agora = models.agora()
+    agora_local = agora - timedelta(hours=FUSO_LOCAL_EM_HORAS)
+
+    if total_leitos == 0:
+        return None, 0
+
+    # Não calcula ocupação de meses futuros.
+    if (ano, numero_mes) > (agora_local.year, agora_local.month):
+        return None, 0
+
+    mes_atual = (ano, numero_mes) == (agora_local.year, agora_local.month)
+
+    if mes_atual:
+        ultimo_dia = agora_local.day
+    else:
+        ultimo_dia = calendar.monthrange(ano, numero_mes)[1]
+
+    ids_leitos = {
+        linha[0]
+        for linha in (
+            db.query(models.Localizacao.id)
+            .filter(models.Localizacao.tipo == "leito")
+            .all()
+        )
+    }
+
+    pacientes = (
+        db.query(models.Paciente)
+        .filter(models.Paciente.chegada_em < fim)
+        .all()
+    )
+
+    historico = carregar_historico(db, fim)
+
+    def em_leito(paciente, instante):
+        movimentos = historico.get(paciente.id)
+
+        # Sem movimentações registradas: usa a localização atual.
+        if not movimentos:
+            return paciente.localizacao_id in ids_leitos
+
+        destino = None
+        for data_hora, destino_id in movimentos:
+            if data_hora <= instante:
+                destino = destino_id
+            else:
+                break
+
+        return destino in ids_leitos
+
+    ocupacoes_diarias = []
+    ocupados_ultimo_dia = 0
+
+    for dia in range(1, ultimo_dia + 1):
+        if mes_atual and dia == agora_local.day:
+            fechamento_utc = agora
+        else:
+            fechamento_local = datetime(ano, numero_mes, dia, 23, 59, 59)
+            fechamento_utc = fechamento_local + timedelta(
+                hours=FUSO_LOCAL_EM_HORAS
+            )
+
+        ocupados = 0
+
+        for paciente in pacientes:
+            if paciente.chegada_em is None or paciente.chegada_em > fechamento_utc:
+                continue
+
+            saida = saidas_por_paciente.get(paciente.id)
+
+            if saida is not None and saida <= fechamento_utc:
+                continue
+
+            if em_leito(paciente, fechamento_utc):
+                ocupados += 1
+
+        ocupacoes_diarias.append(ocupados / total_leitos * 100)
+
+        if dia == ultimo_dia:
+            ocupados_ultimo_dia = ocupados
+
+    media = round(sum(ocupacoes_diarias) / len(ocupacoes_diarias), 1)
+
+    return media, ocupados_ultimo_dia
+
+
 def calcular_relatorio(db: Session, mes: str):
     inicio, fim = periodo_mes(mes)
     agora = models.agora()
@@ -56,14 +211,21 @@ def calcular_relatorio(db: Session, mes: str):
     # Pacientes desse período que continuam internadas
     internadas = sum(1 for p in atendidas if p.status == "ativa")
 
-    # Saídas registradas no período
+    # Saídas registradas no período (Movimentacao + Paciente.saida_em)
+    todas_saidas = mapa_saidas(db)
+
+    saidas_no_mes = {
+        paciente_id: data_saida
+        for paciente_id, data_saida in todas_saidas.items()
+        if data_saida is not None and inicio <= data_saida < fim
+    }
+
     saidas = (
         db.query(models.Paciente)
-        .filter(
-            models.Paciente.saida_em >= inicio,
-            models.Paciente.saida_em < fim,
-        )
+        .filter(models.Paciente.id.in_(list(saidas_no_mes.keys())))
         .all()
+        if saidas_no_mes
+        else []
     )
 
     altas = sum(1 for p in saidas if p.desfecho == "casa")
@@ -99,15 +261,12 @@ def calcular_relatorio(db: Session, mes: str):
         1 for p in partos if p.nascimento == "natimorto"
     )
 
-    # O sistema não possui campo de óbito materno.
-    obitos_maternos = None
-
     # Permanência média das pacientes que saíram no período
     permanencias = [
-        (p.saida_em - p.chegada_em).total_seconds() / 3600
+        (saidas_no_mes[p.id] - p.chegada_em).total_seconds() / 3600
         for p in saidas
-        if p.saida_em and p.chegada_em
-        and p.saida_em >= p.chegada_em
+        if p.chegada_em
+        and saidas_no_mes[p.id] >= p.chegada_em
     ]
 
     permanencia_media = (
@@ -115,7 +274,7 @@ def calcular_relatorio(db: Session, mes: str):
         if permanencias else None
     )
 
-    # Ocupação atual dos leitos
+    # Leitos ativos e disponíveis
     leitos = (
         db.query(models.Localizacao)
         .filter(
@@ -129,52 +288,83 @@ def calcular_relatorio(db: Session, mes: str):
         l for l in leitos if l.situacao != "indisponivel"
     ]
 
-    ocupados = (
-        db.query(models.Paciente)
-        .join(
-            models.Localizacao,
-            models.Paciente.localizacao_id == models.Localizacao.id,
-        )
-        .filter(
-            models.Paciente.status == "ativa",
-            models.Localizacao.tipo == "leito",
-        )
-        .count()
-    )
-
     total_leitos = len(leitos_disponiveis)
 
-    ocupacao_atual = (
-        round(ocupados / total_leitos * 100)
-        if total_leitos else 0
+    # Ocupação média mensal
+    ocupacao_media, ocupados = calcular_ocupacao_media(
+        db, mes, total_leitos, todas_saidas
     )
 
-    # Pacientes atualmente alocadas em macas
-    pacientes_maca = (
-        db.query(models.Paciente)
-        .join(
-            models.Localizacao,
-            models.Paciente.localizacao_id == models.Localizacao.id,
+    # Macas no mês selecionado (histórico de movimentações, e não a
+    # situação de agora). Mês futuro: sem dados.
+    total_macas = 0
+    espera_media = None
+
+    if inicio <= agora:
+        ids_macas = {
+            linha[0]
+            for linha in (
+                db.query(models.Localizacao.id)
+                .filter(models.Localizacao.tipo == "maca")
+                .all()
+            )
+        }
+
+        historico = carregar_historico(db, fim)
+        limite = min(fim, agora)
+
+        # Primeira alocação em maca de cada paciente dentro do mês.
+        primeiras = {}
+
+        for paciente_id, movimentos in historico.items():
+            for indice, (data_hora, destino_id) in enumerate(movimentos):
+                if destino_id in ids_macas and inicio <= data_hora < fim:
+                    primeiras[paciente_id] = indice
+                    break
+
+        total_macas = len(primeiras)
+
+        esperas = []
+
+        if primeiras:
+            pacientes_maca = (
+                db.query(models.Paciente)
+                .filter(models.Paciente.id.in_(list(primeiras.keys())))
+                .all()
+            )
+
+            for p in pacientes_maca:
+                if not p.chegada_tem_hora or p.chegada_em is None:
+                    continue
+
+                movimentos = historico[p.id]
+                indice = primeiras[p.id]
+
+                # A espera termina quando a paciente sai da maca (próxima
+                # movimentação ou saída). Se ainda está nela, vai até
+                # agora (ou até o fim do mês, se o mês já terminou).
+                encerramentos = [limite]
+
+                if indice + 1 < len(movimentos):
+                    encerramentos.append(movimentos[indice + 1][0])
+
+                saida = todas_saidas.get(p.id)
+                if saida is not None:
+                    encerramentos.append(saida)
+
+                fim_espera = min(encerramentos)
+
+                if fim_espera < p.chegada_em:
+                    continue
+
+                esperas.append(
+                    (fim_espera - p.chegada_em).total_seconds() / 60
+                )
+
+        espera_media = (
+            round(sum(esperas) / len(esperas))
+            if esperas else None
         )
-        .filter(
-            models.Paciente.status == "ativa",
-            models.Localizacao.tipo == "maca",
-        )
-        .all()
-    )
-
-    total_macas = len(pacientes_maca)
-
-    esperas = [
-        (agora - p.chegada_em).total_seconds() / 60
-        for p in pacientes_maca
-        if p.chegada_tem_hora and p.chegada_em <= agora
-    ]
-
-    espera_media = (
-        round(sum(esperas) / len(esperas))
-        if esperas else None
-    )
 
     return {
         "mes": mes,
@@ -194,11 +384,10 @@ def calcular_relatorio(db: Session, mes: str):
         },
         "obitos": {
             "neonatais": obitos_neonatais,
-            "maternos": obitos_maternos,
         },
         "permanencia": {
             "media_horas": permanencia_media,
-            "ocupacao_atual": ocupacao_atual,
+            "ocupacao_media": ocupacao_media,
             "leitos_ocupados": ocupados,
             "leitos_disponiveis": total_leitos,
         },
@@ -211,20 +400,22 @@ def calcular_relatorio(db: Session, mes: str):
 
 def dados_csv(relatorio: dict):
     linhas = [
-        ("Atendidas", relatorio["atendimentos"]["atendidas"]),
-        ("Internadas atualmente", relatorio["atendimentos"]["internadas"]),
-        ("Altas", relatorio["saidas"]["altas"]),
-        ("Transferências", relatorio["saidas"]["transferencias"]),
-        ("Alojamento conjunto", relatorio["saidas"]["alojamento"]),
-        ("Nascimentos", relatorio["nascimentos"]["total"]),
-        ("Parto vaginal", relatorio["nascimentos"]["normal"]),
-        ("Cesáreas", relatorio["nascimentos"]["cesarea"]),
-        ("Natimortos", relatorio["obitos"]["neonatais"]),
-        ("Óbitos maternos", "Não disponível"),
-        ("Permanência média (horas)", relatorio["permanencia"]["media_horas"]),
-        ("Ocupação atual (%)", relatorio["permanencia"]["ocupacao_atual"]),
-        ("Pacientes em maca", relatorio["macas"]["atendidas"]),
-        ("Espera média em maca (min)", relatorio["macas"]["espera_media_minutos"]),
+        ("atendidas", relatorio["atendimentos"]["atendidas"]),
+        ("internadas atualmente", relatorio["atendimentos"]["internadas"]),
+        ("altas", relatorio["saidas"]["altas"]),
+        ("transferencias", relatorio["saidas"]["transferencias"]),
+        ("alojamento_conjunto", relatorio["saidas"]["alojamento"]),
+        ("nascimentos", relatorio["nascimentos"]["total"]),
+        ("parto_vaginal", relatorio["nascimentos"]["normal"]),
+        ("cesareas", relatorio["nascimentos"]["cesarea"]),
+        ("natimortos", relatorio["obitos"]["neonatais"]),
+        ("permanencia_media_horas", relatorio["permanencia"]["media_horas"]),
+        (
+            "ocupacao_media_mensal_percentual",
+            relatorio["permanencia"]["ocupacao_media"],
+        ),
+        ("atendidas_em_maca", relatorio["macas"]["atendidas"]),
+        ("espera_media_minutos", relatorio["macas"]["espera_media_minutos"]),
     ]
 
     return linhas
@@ -234,12 +425,16 @@ def gerar_csv(relatorio: dict):
     arquivo = io.StringIO()
     escritor = csv.writer(arquivo, delimiter=";")
 
-    escritor.writerow(["Métrica", "Valor"])
+    escritor.writerow(["métrica", "valor"])
 
     for metrica, valor in dados_csv(relatorio):
         escritor.writerow([metrica, valor if valor is not None else "Não disponível"])
 
     return "\ufeff" + arquivo.getvalue()
+
+
+def _valor_pdf(valor):
+    return valor if valor is not None else "—"
 
 
 def gerar_pdf(relatorio: dict):
@@ -302,16 +497,15 @@ def gerar_pdf(relatorio: dict):
         ["Parto vaginal", relatorio["nascimentos"]["normal"]],
         ["Cesáreas", relatorio["nascimentos"]["cesarea"]],
         ["Natimortos", relatorio["obitos"]["neonatais"]],
-        ["Óbitos maternos", "Não disponível"],
         [
             "Permanência média (horas)",
-            relatorio["permanencia"]["media_horas"] or "—",
+            _valor_pdf(relatorio["permanencia"]["media_horas"]),
         ],
         [
-            "Ocupação atual (%)",
-            relatorio["permanencia"]["ocupacao_atual"],
+            "Ocupação média mensal (%)",
+            _valor_pdf(relatorio["permanencia"]["ocupacao_media"]),
         ],
-        ["Pacientes em maca", relatorio["macas"]["atendidas"]],
+        ["Atendidas em maca", relatorio["macas"]["atendidas"]],
         [
             "Espera média em maca (min)",
             relatorio["macas"]["espera_media_minutos"] or "—",
@@ -338,7 +532,9 @@ def gerar_pdf(relatorio: dict):
         Spacer(1, 18),
         Paragraph(
             "Documento gerado automaticamente pelo Gestar Digital. "
-            "Os indicadores refletem os registros disponíveis no sistema.",
+            "Os indicadores refletem os registros disponíveis no sistema. "
+            "A ocupação média considera a média das ocupações diárias dos "
+            "leitos disponíveis.",
             estilos["Italic"],
         ),
     ])

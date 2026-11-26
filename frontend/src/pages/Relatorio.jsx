@@ -83,10 +83,9 @@ function gerarPrevia(dados) {
     ["parto_vaginal", dados.nascimentos.normal],
     ["cesareas", dados.nascimentos.cesarea],
     ["natimortos", dados.obitos.neonatais],
-    ["obitos_maternos", "Não disponível"],
     ["permanencia_media_horas", dados.permanencia.media_horas],
-    ["ocupacao_atual_percentual", dados.permanencia.ocupacao_atual],
-    ["pacientes_em_maca", dados.macas.atendidas],
+    ["ocupacao_media_mensal_percentual", dados.permanencia.ocupacao_media],
+    ["atendidas_em_maca", dados.macas.atendidas],
     ["espera_media_minutos", dados.macas.espera_media_minutos],
   ];
 }
@@ -168,7 +167,6 @@ export default function Relatorio() {
     };
   }, [mes]);
 
-  // Limpa a tela ao trocar de mês; o efeito acima só busca os dados novos.
   function trocarMes(novoMes) {
     setMes(novoMes);
     setCarregando(true);
@@ -177,7 +175,6 @@ export default function Relatorio() {
   }
 
 
-  
   async function exportar(tipo) {
     setExportando(tipo);
     setErro("");
@@ -186,7 +183,6 @@ export default function Relatorio() {
       if (tipo === "pdf") {
         await exportarRelatorioPDF(mes);
       } else {
-        // Utiliza o mesmo snapshot carregado na tela.
         baixarCSV(dados, mes);
       }
     } catch (erroApi) {
@@ -195,6 +191,7 @@ export default function Relatorio() {
       setExportando("");
     }
   }
+
 
   return (
     <div className="relatorio">
@@ -323,15 +320,11 @@ export default function Relatorio() {
 
 
             <Indicador
-              titulo="Óbitos"
+              titulo="Óbitos fetais"
               itens={[
                 {
                   label: "natimortos",
                   valor: dados.obitos.neonatais,
-                },
-                {
-                  label: "maternos",
-                  valor: "N/D",
                 },
               ]}
             />
@@ -347,18 +340,20 @@ export default function Relatorio() {
                   ),
                 },
                 {
-                  label: "ocupação atual",
-                  valor: `${dados.permanencia.ocupacao_atual}%`,
+                  label: "ocupação média mensal",
+                  valor: dados.permanencia.ocupacao_media == null
+                    ? "—"
+                    : `${dados.permanencia.ocupacao_media}%`,
                 },
               ]}
             />
 
 
             <Indicador
-              titulo="Pacientes em maca"
+              titulo="Atendimentos em maca"
               itens={[
                 {
-                  label: "atendidas em maca",
+                  label: "pacientes atendidas em maca",
                   valor: dados.macas.atendidas,
                 },
                 {
